@@ -12,5 +12,9 @@ export * from './ui';
 export * from './theme';
 export * from './shell';
 export * from './i18n';
+export * from './format';
+export * from './auth';
+export * from './policy';
+export * from './api-client';
 import './vue-augment';
 //# sourceMappingURL=index.d.ts.map

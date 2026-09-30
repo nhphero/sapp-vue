@@ -1,14 +1,14 @@
 /**
  * 🧩 Feature Contracts
- * A mini app is composed of features. Each feature is installed like a Vue
- * plugin (`install(ctx)`) and registers its routes, components, skills and
- * commands through the FeatureContext, which namespaces ids by module.
+ * A mini app is composed of features. Each feature is installed like a Vue plugin
+ * (`install(ctx)`) and registers its routes and components through `MiniAppContext`,
+ * which namespaces ids by module.
  */
 import type { App } from 'vue';
 import type { ISuperApp } from './kernel';
 import type { RegisteredApp } from './registry';
 import type { LocaleMessages, TranslateParams } from './i18n';
-import type { CommandRegistration, ComponentRegistration, ComponentSource, SkillRegistration } from './registry';
+import type { ComponentRegistration, ComponentSource } from './registry';
 export interface FeatureRouteMeta {
     /** Label used by layouts for navigation. */
     title?: string;
@@ -62,28 +62,42 @@ export interface IFeatureRouter {
     /** Concrete sub-path of a route for navigation (optional params and catch-all removed). */
     pathOf(route: FeatureRoute): string;
 }
-export interface FeatureContext {
+/**
+ * ONE context for a mini app. `setup(ctx)` gets it, every `install(ctx)` gets it, and a view
+ * reads the same shape back from its own `useApp()` — there is no second "feature context" to
+ * learn, because a feature is not a smaller kind of app, it is a folder of this app's routes.
+ *
+ * The object a feature receives is this context with `featureId` filled in and `registerRoute`
+ * bound to that feature; everything else is the same. Registration is install-time work — a view
+ * holds the same object but has nothing to register.
+ *
+ * `registerSkill` / `registerCommand` are deliberately absent: the Shell's sidebar and ⌘K palette
+ * are shared surfaces, and a mini app does not write into them (see demo-app/.rules/structure.md).
+ * A Shell feature has its own `ShellFeatureContext`, which does have them.
+ */
+export interface MiniAppContext {
     app: App;
     superApp: ISuperApp;
+    /** Id the bundle was authored with. */
     moduleId: string;
-    featureId: string;
+    /** Id the Shell mounted the bundle under (registry slug). */
+    mountId: string;
+    /** `/app/<mountId>` */
+    basePath: string;
+    /** Registry record from Admin → Application Registry, or null when mounted from a static manifest. */
+    config: RegisteredApp | null;
     router: IFeatureRouter;
-    /** Register a route under this feature. */
+    /** The feature currently installing; absent in `setup()` and outside install time. */
+    featureId?: string;
+    /** Register a route under the installing feature. */
     registerRoute(route: FeatureRoute): ResolvedFeatureRoute;
     /** Register a component as `<moduleId>.<id>`; returns the full id. */
     registerComponent(config: ComponentRegistration): string;
     /** Register a component with the exact id given (shared/global ids such as `integration.form.sql`). */
     registerGlobalComponent(config: ComponentRegistration): string;
-    /** Register a skill as `<moduleId>.<id>`; `handler` defaults to navigating to `route` when given. */
-    registerSkill(config: Omit<SkillRegistration, 'handler'> & {
-        handler?: SkillRegistration['handler'];
-        route?: string;
-    }): string;
-    /** Register a command as `<moduleId>.<id>`. */
-    registerCommand(config: CommandRegistration): string;
     /**
-     * Register translations for this mini app: `registerMessages({ en: { title: 'Orders' }, vi: { title: 'Đơn hàng' } })`
-     * → keys `<moduleId>.title`. Pass `namespace` to override (`''` = global keys such as `common.*`).
+     * Register translations for this mini app. Prefer `createMiniApp({ messages })` — one JSON file
+     * per app, registered once (see demo-app/.rules/i18n.md); this stays for the rare late addition.
      */
     registerMessages(messages: LocaleMessages, namespace?: string): void;
     /** Translate with the module namespace first (`t('title')` → `<moduleId>.title`), then the raw key. */
@@ -97,21 +111,7 @@ export interface IMfeFeature {
     /** Unique within the mini app. */
     id: string;
     name?: string;
-    install(ctx: FeatureContext): void | Promise<void>;
-}
-export declare function defineFeature<T extends IMfeFeature>(feature: T): T;
-export interface MiniAppSetupContext {
-    app: App;
-    superApp: ISuperApp;
-    /** Id the bundle was authored with. */
-    moduleId: string;
-    /** Id the Shell mounted the bundle under (registry slug). */
-    mountId: string;
-    /** `/app/<mountId>` */
-    basePath: string;
-    /** Registry record from Admin → Application Registry, or null when mounted from a static manifest. */
-    config: RegisteredApp | null;
-    router: IFeatureRouter;
+    install(ctx: MiniAppContext): void | Promise<void>;
 }
 export interface MiniAppOptions {
     id: string;
@@ -124,9 +124,15 @@ export interface MiniAppOptions {
      */
     layout?: ComponentSource;
     /** Runs once before features are installed (provide global state, register `$c`...). */
-    setup?(ctx: MiniAppSetupContext): void | Promise<void>;
+    setup?(ctx: MiniAppContext): void | Promise<void>;
     /** Translations registered under the module namespace before features install. */
     messages?: LocaleMessages;
+    /**
+     * Sub-path opened when the app is reached at its root (`/app/<id>`), e.g. `'projects'`. The URL is
+     * replaced, so the address bar, the active menu tab and the back button all reflect the real page.
+     * Omit it and the root renders whatever route is registered at `''`.
+     */
+    defaultPath?: string;
 }
 /** Injection keys provided by createMiniApp. */
 export declare const MINI_APP_ROUTER_KEY: "$miniRouter";

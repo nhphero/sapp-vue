@@ -1,187 +1,175 @@
-import { a as b, b as N, M as F } from "./chunks/feature-DYESLk3l.js";
-import { d as q } from "./chunks/feature-DYESLk3l.js";
-import { reactive as P, defineComponent as W, inject as y, h as x, markRaw as j, defineAsyncComponent as S } from "vue";
-const I = (o) => (o || "").split("/").filter(Boolean).join("/"), V = (o) => {
-  const t = I(o.path).split("/").filter(Boolean).map((a) => {
-    if (a === "*") return { name: "pathMatch", optional: !0, catchAll: !0 };
-    if (a.startsWith(":")) {
-      const e = a.endsWith("?");
-      return { name: e ? a.slice(1, -1) : a.slice(1), optional: e, catchAll: !1 };
+import { a as E, d as W, M as _ } from "./chunks/feature-CQOHnwJM.js";
+import { reactive as R, defineComponent as b, inject as y, h as F, markRaw as j, defineAsyncComponent as x } from "vue";
+const v = (n) => (n || "").split("/").filter(Boolean).join("/"), B = (n) => {
+  const t = v(n.path).split("/").filter(Boolean).map((s) => {
+    if (s === "*") return { name: "pathMatch", optional: !0, catchAll: !0 };
+    if (s.startsWith(":")) {
+      const e = s.endsWith("?");
+      return { name: e ? s.slice(1, -1) : s.slice(1), optional: e, catchAll: !1 };
     }
-    return { name: "", optional: !1, catchAll: !1, literal: a };
-  }), i = t.reduce((a, e) => a + (e.catchAll ? 100 : e.literal !== void 0 ? 0 : e.optional ? 2 : 1), 0);
-  return { route: o, segments: t, score: i };
-}, k = (o, t) => {
-  const i = {};
-  let a = 0;
-  for (const e of o.segments) {
+    return { name: "", optional: !1, catchAll: !1, literal: s };
+  }), a = t.reduce((s, e) => s + (e.catchAll ? 100 : e.literal !== void 0 ? 0 : e.optional ? 2 : 1), 0);
+  return { route: n, segments: t, score: a };
+}, V = (n, t) => {
+  const a = {};
+  let s = 0;
+  for (const e of n.segments) {
     if (e.catchAll)
-      return i[e.name] = t.slice(a).join("/"), i;
-    const d = t[a];
-    if (d === void 0) {
+      return a[e.name] = t.slice(s).join("/"), a;
+    const u = t[s];
+    if (u === void 0) {
       if (e.optional) continue;
       return null;
     }
     if (e.literal !== void 0) {
-      if (e.literal !== d) return null;
+      if (e.literal !== u) return null;
     } else
-      i[e.name] = decodeURIComponent(d);
-    a++;
+      a[e.name] = decodeURIComponent(u);
+    s++;
   }
-  return a === t.length ? i : null;
+  return s === t.length ? a : null;
 };
-function B(o, t) {
-  const i = [], a = P([]), e = P({ path: "", route: null, params: {} }), d = P({ id: o }), M = (u) => {
-    const r = I(u);
-    return r ? `/app/${d.id}/${r}` : `/app/${d.id}`;
-  }, g = (u) => {
-    const r = I(u), p = r.split("/").filter(Boolean);
-    for (const f of i) {
-      const n = k(f, p);
-      if (n) return { path: r, route: f.route, params: n };
+function T(n, t) {
+  const a = [], s = R([]), e = R({ path: "", route: null, params: {} }), u = R({ id: n }), M = (c) => {
+    const i = v(c);
+    return i ? `/app/${u.id}/${i}` : `/app/${u.id}`;
+  }, w = (c) => {
+    const i = v(c), m = i.split("/").filter(Boolean);
+    for (const d of a) {
+      const r = V(d, m);
+      if (r) return { path: i, route: d.route, params: r };
     }
-    return { path: r, route: null, params: {} };
+    return { path: i, route: null, params: {} };
   };
   return {
-    moduleId: o,
+    moduleId: n,
     get mountId() {
-      return d.id;
+      return u.id;
     },
-    setMountId(u) {
-      d.id = u;
+    setMountId(c) {
+      u.id = c;
     },
-    routes: a,
+    routes: s,
     current: e,
-    addRoute(u, r) {
-      const p = { ...r, path: I(r.path), featureId: u, fullPath: M(r.path) };
-      return a.push(p), i.push(V(p)), i.sort((f, n) => f.score - n.score), p;
+    addRoute(c, i) {
+      const m = { ...i, path: v(i.path), featureId: c, fullPath: M(i.path) };
+      return s.push(m), a.push(B(m)), a.sort((d, r) => d.score - r.score), m;
     },
-    resolve: g,
+    resolve: w,
     href: M,
-    push(u) {
-      t.$router?.push(M(u));
+    push(c) {
+      t.$router?.push(M(c));
     },
-    pathOf(u) {
-      return I(u.path).split("/").filter((r) => r && r !== "*" && !(r.startsWith(":") && r.endsWith("?"))).join("/");
+    pathOf(c) {
+      return v(c.path).split("/").filter((i) => i && i !== "*" && !(i.startsWith(":") && i.endsWith("?"))).join("/");
     },
-    sync(u) {
-      const r = g(u);
-      return e.path = r.path, e.route = r.route, e.params = r.params, r;
+    sync(c) {
+      const i = w(c);
+      return e.path = i.path, e.route = i.route, e.params = i.params, i;
     }
   };
 }
-const R = /* @__PURE__ */ new WeakMap(), T = (o) => {
-  if (R.has(o)) return R.get(o);
-  const t = o.component, i = j(typeof t == "function" ? S(t) : t);
-  return R.set(o, i), i;
-}, U = W({
+const P = /* @__PURE__ */ new WeakMap(), U = (n) => {
+  if (P.has(n)) return P.get(n);
+  const t = n.component, a = j(typeof t == "function" ? x(t) : t);
+  return P.set(n, a), a;
+}, K = b({
   name: "FeatureView",
-  setup(o, { attrs: t, slots: i }) {
-    const a = y(b);
-    if (!a) throw new Error("[FeatureView] No feature router provided. Use createMiniApp().");
+  setup(n, { attrs: t, slots: a }) {
+    const s = y(E);
+    if (!s) throw new Error("[FeatureView] No feature router provided. Use createMiniApp().");
     return () => {
-      const { route: e, params: d } = a.current;
+      const { route: e, params: u } = s.current;
       if (!e)
-        return i.fallback ? i.fallback({ path: a.current.path }) : null;
-      const M = e.props ? { ...d } : {};
-      return x(T(e), { ...t, ...M, key: e.fullPath });
+        return a.fallback ? a.fallback({ path: s.current.path }) : null;
+      const M = e.props ? { ...u } : {};
+      return F(U(e), { ...t, ...M, key: e.fullPath });
     };
   }
-}), E = (o, t) => t.startsWith(`${o}.`) ? t : `${o}.${t}`;
-function z(o) {
-  const { id: t, name: i, aliases: a = [], features: e, layout: d, setup: M, messages: g } = o;
-  let u = !1, r = null;
-  const p = (f, n, w, m) => {
-    const C = {
-      app: f,
-      superApp: n,
-      moduleId: t,
-      featureId: m.id,
-      router: w,
-      registerRoute: (s) => w.addRoute(m.id, s),
-      registerComponent: (s) => {
-        const c = E(t, s.id);
-        return n.registerComponent({ ...s, id: c }), c;
-      },
-      registerGlobalComponent: (s) => (n.registerComponent(s), s.id),
-      registerSkill: ({ route: s, handler: c, ...h }) => {
-        const l = E(t, h.id);
-        return n.registerSkill({
-          ...h,
-          id: l,
-          handler: c ?? (() => {
-            w.push(s ?? "");
-          })
-        }), l;
-      },
-      registerMessages: (s, c) => n.$i18n?.addMessages(s, c ?? t),
-      t: (s, c) => {
-        const h = n.$i18n;
-        return h ? h.te(`${t}.${s}`) ? h.t(`${t}.${s}`, c) : h.t(s, c) : c?.default ?? s;
-      },
-      registerCommand: (s) => {
-        const c = E(t, s.id);
-        return n.registerCommand({ ...s, id: c }), c;
-      },
-      provide: (s, c) => f.provide(s, c)
-    };
-    return m.install(C);
-  };
-  return N({
+}), L = (n, t) => t.startsWith(`${n}.`) ? t : `${n}.${t}`;
+function z(n) {
+  const { id: t, name: a, aliases: s = [], features: e, layout: u, setup: M, messages: w } = n;
+  let c = !1, i = null;
+  const m = (d, r, p, $, g, I, C) => ({
+    app: d,
+    superApp: r,
+    moduleId: t,
+    mountId: $,
+    basePath: g,
+    config: I,
+    router: p,
+    featureId: C,
+    registerRoute: (l) => p.addRoute(C ?? t, l),
+    registerComponent: (l) => {
+      const o = L(t, l.id);
+      return r.registerComponent({ ...l, id: o }), o;
+    },
+    registerGlobalComponent: (l) => (r.registerComponent(l), l.id),
+    registerMessages: (l, o) => r.$i18n?.addMessages(l, o ?? t),
+    t: (l, o) => {
+      const h = r.$i18n;
+      return h ? h.te(`${t}.${l}`) ? h.t(`${t}.${l}`, o) : h.t(l, o) : o?.default ?? l;
+    },
+    provide: (l, o) => d.provide(l, o)
+  });
+  return W({
     id: t,
-    name: i,
-    aliases: a,
-    async install(f, n, w) {
-      const m = w?.moduleId || t, C = w?.basePath || `/app/${m}`, s = w?.app ?? null, c = Array.from(/* @__PURE__ */ new Set([m, t, ...a]));
-      if (c.every((l) => n.isModuleInstalled(l))) return;
-      if (console.log(`🚀 [${t}] Installing mini app as [${m}] with ${e.length} feature(s)...`), r ??= B(t, n), r.setMountId(m), !u) {
-        u = !0, f.provide(b, r), f.provide(F, { app: f, superApp: n, moduleId: t, mountId: m, basePath: C, config: s, router: r });
-        const l = f.config.globalProperties;
-        l.$c || (l.$c = ($) => n.getComponent($)), l.$s || (l.$s = n), l.$superApp || (l.$superApp = n), !l.$t && n.$i18n && (l.$i18n = n.$i18n, l.$t = ($, _) => n.$i18n.t($, _)), g && n.$i18n?.addMessages(g, t), await M?.({ app: f, superApp: n, moduleId: t, mountId: m, basePath: C, config: s, router: r });
-        const v = /* @__PURE__ */ new Set();
-        for (const $ of e) {
-          if (v.has($.id)) throw new Error(`[${t}] Duplicate feature id: ${$.id}`);
-          v.add($.id), await p(f, n, r, $), console.log(`🧩 [${t}] Feature installed: ${$.id}`);
+    name: a,
+    aliases: s,
+    async install(d, r, p) {
+      const $ = p?.moduleId || t, g = p?.basePath || `/app/${$}`, I = p?.app ?? null, C = Array.from(/* @__PURE__ */ new Set([$, t, ...s]));
+      if (C.every((o) => r.isModuleInstalled(o))) return;
+      if (console.log(`🚀 [${t}] Installing mini app as [${$}] with ${e.length} feature(s)...`), i ??= T(t, r), i.setMountId($), !c) {
+        c = !0, d.provide(E, i), d.provide(_, m(d, r, i, $, g, I));
+        const o = d.config.globalProperties;
+        o.$c || (o.$c = (f) => r.getComponent(f)), o.$s || (o.$s = r), o.$superApp || (o.$superApp = r), !o.$t && r.$i18n && (o.$i18n = r.$i18n, o.$t = (f, N) => r.$i18n.t(f, N)), w && r.$i18n?.addMessages(w, t), await M?.(m(d, r, i, $, g, I));
+        const h = /* @__PURE__ */ new Set();
+        for (const f of e) {
+          if (h.has(f.id)) throw new Error(`[${t}] Duplicate feature id: ${f.id}`);
+          h.add(f.id), await f.install(m(d, r, i, $, g, I, f.id)), console.log(`🧩 [${t}] Feature installed: ${f.id}`);
         }
       }
-      const h = r;
-      for (const l of c)
-        n.isModuleInstalled(l) || (n.registerComponent({
-          id: `${l}.main`,
-          name: `${i} Main`,
+      const l = i;
+      for (const o of C)
+        r.isModuleInstalled(o) || (r.registerComponent({
+          id: `${o}.main`,
+          name: `${a} Main`,
           category: "Main Views",
-          component: d ?? U
-        }), n.registerModuleEntry({ moduleId: l, entryComponentId: `${l}.main` }), n.onPathChange(l, (v) => {
-          h.setMountId(l), h.sync(v);
-        }), n.markModuleInstalled(l));
+          component: u ?? K
+        }), r.registerModuleEntry({ moduleId: o, entryComponentId: `${o}.main` }), r.onPathChange(o, (h) => {
+          if (l.setMountId(o), !(h || "").split("/").filter(Boolean).length && n.defaultPath) {
+            r.$router?.replace(l.href(n.defaultPath));
+            return;
+          }
+          l.sync(h);
+        }), r.markModuleInstalled(o));
       console.log(`🎉 [${t}] Installed`);
     }
   });
 }
 function D() {
-  const o = y(b);
-  if (!o) throw new Error("[useMiniRouter] Not inside a mini app created with createMiniApp().");
-  return o;
+  const n = y(E);
+  if (!n) throw new Error("[useMiniRouter] Not inside a mini app created with createMiniApp().");
+  return n;
 }
 function G() {
-  const { superApp: o, moduleId: t } = K(), i = o.$i18n;
-  return { i18n: i, t: (e, d) => i.te(`${t}.${e}`) ? i.t(`${t}.${e}`, d) : i.t(e, d), get locale() {
-    return i.locale;
-  }, setLocale: (e) => i.setLocale(e) };
+  const { superApp: n, moduleId: t } = S(), a = n.$i18n;
+  return { i18n: a, t: (e, u) => a.te(`${t}.${e}`) ? a.t(`${t}.${e}`, u) : a.t(e, u), get locale() {
+    return a.locale;
+  }, setLocale: (e) => a.setLocale(e) };
 }
-function K() {
-  const o = y(F);
-  if (!o) throw new Error("[useMiniApp] Not inside a mini app created with createMiniApp().");
-  return o;
+function S() {
+  const n = y(_);
+  if (!n) throw new Error("[useMiniApp] Not inside a mini app created with createMiniApp().");
+  return n;
 }
 export {
-  U as FeatureView,
-  B as createFeatureRouter,
+  K as FeatureView,
+  T as createFeatureRouter,
   z as createMiniApp,
-  q as defineFeature,
-  N as defineMfeModule,
+  W as defineMfeModule,
   G as useI18n,
-  K as useMiniApp,
+  S as useMiniApp,
   D as useMiniRouter
 };
 //# sourceMappingURL=mfe.js.map

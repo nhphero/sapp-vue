@@ -1,7 +1,11 @@
 /**
  * 🌐 Translation Contracts
- * One reactive dictionary for the Shell and every mini app. Keys are dot paths (`common.save`,
- * `orders.list.title`); mini apps register their own keys under their module namespace.
+ * One reactive dictionary for the Shell and every mini app.
+ *
+ * Shell keys are dot paths (`common.save`). A FEATURE's keys are the Vietnamese
+ * sentence itself (`'Tạo sản phẩm'`) — Vietnamese is the source language, English is
+ * a translation of it. Lookup is a flat map, so spaces and punctuation in a key are
+ * harmless. Mini apps register under their module namespace either way.
  */
 /** Nested or flat message tree for ONE locale. */
 export type MessageTree = {
@@ -16,7 +20,12 @@ export interface II18n {
     readonly fallbackLocale: string;
     /** Locales that have at least one message. */
     readonly availableLocales: string[];
-    /** Translate a key; `{name}` placeholders are replaced from `params`. Missing key → the key itself (or `params.default`). */
+    /**
+     * Translate a key; `{name}` placeholders are replaced from `params`.
+     * Passing `count` also selects a plural form when the message contains `|`
+     * (`'{count} product | {count} products'`; three forms = zero | one | other).
+     * Missing key → the key itself (or `params.default`).
+     */
     t(key: string, params?: TranslateParams & {
         default?: string;
     }): string;

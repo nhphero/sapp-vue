@@ -68,6 +68,8 @@ export declare const SUPERAPP_EVENTS: {
     readonly SYSTEM_ERROR: "system:error";
     readonly SYSTEM_GOVERNANCE: "system:governance";
     readonly APPS_UPDATED: "apps:updated";
+    /** The user asked to sign out. Emitted before the Shell drops the token, so an auth provider (SSO) can end its own session. */
+    readonly AUTH_LOGOUT: "auth:logout";
 };
 export type SuperAppEvent = (typeof SUPERAPP_EVENTS)[keyof typeof SUPERAPP_EVENTS];
 //# sourceMappingURL=protocol.d.ts.map

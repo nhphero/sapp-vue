@@ -1,7 +1,7 @@
 import { reactive, markRaw, ref, watch, watchEffect, nextTick, defineAsyncComponent, shallowRef, triggerRef, defineComponent, h, provide, inject, type App } from 'vue';
 import type { Router } from 'vue-router';
 import { useLocalStorage } from '@vueuse/core';
-import type { ISuperApp, ISuperAppModule, SappInstallable, IProtocol, KernelInitOptions, KernelConfig, KernelState, ComponentRegistration, SkillRegistration, CommandRegistration, ModuleEntryRegistration, PathChangeHandler, RegisteredApp, AppRegistrationInput, AppUpdateInput, PingResult, IAppState, II18n } from '../contracts';
+import type { ISuperApp, ISuperAppModule, SappInstallable, IProtocol, KernelInitOptions, KernelConfig, KernelState, ComponentRegistration, SkillRegistration, CommandRegistration, ModuleEntryRegistration, PathChangeHandler, RegisteredApp, AppRegistrationInput, AppUpdateInput, PingResult, IAppState, IAuthState, IFormatService, IPolicyService, CreateApi, II18n } from '../contracts';
 /** @deprecated Use `KernelInitOptions` from `@nhphero/vue-sapp` contracts. */
 export type AppConfig = KernelInitOptions;
 export declare class SuperApp implements ISuperApp {
@@ -17,11 +17,16 @@ export declare class SuperApp implements ISuperApp {
     $router: Router | null;
     $config: KernelConfig | null;
     $theme: any;
-    $toast: any;
     $message: any;
     $dialog: any;
     $api: any;
     $appState: IAppState | null;
+    $authState: IAuthState;
+    /** Type only: resolved by the `$` proxy from the `policy` protocol the Shell registers. */
+    $policy: IPolicyService;
+    /** Set by `createSapp` (it knows the token key and the message service); see contracts/api-client.ts. */
+    createApi: CreateApi;
+    $f: IFormatService;
     $i18n: II18n;
     /** The Proxy returned by the constructor; always hand THIS out (arrow fields capture the raw target as `this`). */
     private _self;
@@ -71,6 +76,12 @@ export declare class SuperApp implements ISuperApp {
     init: (config: KernelInitOptions) => void;
     formatAppEntryUrl: (url: string) => string;
     private getDefaultApps;
+    /**
+     * Apps declared by the Shell's config (`config.json` / discovery) under `registry.apps`:
+     * `[{ id, name, description?, icon? }]`, each mounted from its `<id>.url` entry. They join the
+     * defaults, so a new mini app is listed by configuration — no code change, no per-browser setup.
+     */
+    private getConfiguredApps;
     getRegisteredApps: () => RegisteredApp[];
     syncManifestWithRegisteredApps: () => void;
     registerApp: (appData: AppRegistrationInput) => RegisteredApp;
@@ -91,7 +102,6 @@ export declare class SuperApp implements ISuperApp {
      * Retrieves or initializes a reactive state container for a specific module.
      */
     getModuleState: (moduleId: string, defaultState?: any) => any;
-    createApi: (_baseUrl: string) => any;
     /**
      * 🗺️ [sys-kernel] MFE Entry Registration
      */

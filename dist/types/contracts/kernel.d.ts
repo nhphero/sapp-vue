@@ -10,6 +10,10 @@ import type { useLocalStorage } from '@vueuse/core';
 import type { ISuperAppCore, IProtocol, ISuperAppModule } from './protocol';
 import type { AppRegistrationInput, AppUpdateInput, CommandRegistration, ComponentRegistration, ModuleEntryRegistration, ModuleManifest, PathChangeHandler, PingResult, RegisteredApp, SkillRegistration } from './registry';
 import type { IAppState } from './app-state';
+import type { IAuthState } from './auth';
+import type { IPolicyService } from './policy';
+import type { CreateApi } from './api-client';
+import type { IFormatService } from './format';
 import type { II18n } from './i18n';
 /** Vue reactivity primitives handed to MFEs to guarantee a single runtime. */
 export interface VueBridgeContext {
@@ -56,7 +60,6 @@ export interface KernelInitOptions {
     api?: IProtocol;
     config?: KernelConfig;
     theme?: any;
-    toast?: any;
     message?: any;
     dialog?: any;
 }
@@ -88,13 +91,20 @@ export interface ISuperApp extends ISuperAppCore {
     $router: Router | null;
     $config: KernelConfig | null;
     $theme: any;
-    $toast: any;
     $message: any;
     $dialog: any;
     $api: any;
     $appState: IAppState | null;
+    /** Who is signed in (template global `$auth`). Not `$auth` here: that name resolves to the auth business module. */
+    $authState: IAuthState;
+    /** Authorisation checks — protocol `policy`, registered by the Shell's policy feature. */
+    $policy: IPolicyService;
+    /** Axios instance factory for app backends — `createApi({ baseURL, headers, onError… })`. Set by createSapp. */
+    createApi: CreateApi;
     /** Translation service (registered as protocol `i18n` by createSapp). */
     $i18n: II18n;
+    /** Formatting service: `$f.formatDate(iso)`, `$f.formatMoney(n)`. Follows `$i18n.locale`. */
+    $f: IFormatService;
     /** Dynamic access to any registered protocol or business module (`$auth`, `$socket`...). */
     [dynamic: `$${string}`]: any;
     init(options: KernelInitOptions): void;

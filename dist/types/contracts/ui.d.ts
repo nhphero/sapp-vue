@@ -1,6 +1,9 @@
 /**
- * 🛰️ UI SERVICE CONTRACTS (`$toast`, `$message`, `$dialog`)
+ * 🛰️ UI SERVICE CONTRACTS (`$message`, `$dialog`)
  * Standardized interfaces for cross-module communication.
+ *
+ * `$message` is the ONE feedback service: transient notices (toasts) and blocking questions
+ * (alert / confirm / prompt) both go through it. `$dialog` renders a whole component in a modal.
  */
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 export interface ToastOptions {
@@ -8,13 +11,6 @@ export interface ToastOptions {
     message: string;
     type?: ToastType;
     duration?: number;
-}
-export interface ToastService {
-    show: (options: ToastOptions) => void;
-    success: (title: string, description?: string, options?: ToastOptions) => void;
-    error: (title: string, description?: string, options?: ToastOptions) => void;
-    info: (title: string, description?: string, options?: ToastOptions) => void;
-    warning: (title: string, description?: string, options?: ToastOptions) => void;
 }
 export interface MessageOptions {
     title: string;
@@ -29,11 +25,15 @@ export interface MessageOptions {
     onCancel?: () => void;
 }
 export interface MessageService {
-    show: (options: MessageOptions) => void;
+    success: (title: string, description?: string, options?: Partial<ToastOptions>) => void;
+    error: (title: string, description?: string, options?: Partial<ToastOptions>) => void;
+    info: (title: string, description?: string, options?: Partial<ToastOptions>) => void;
+    warning: (title: string, description?: string, options?: Partial<ToastOptions>) => void;
+    /** Full control over one toast (id to replace an earlier one, duration…). */
+    toast: (options: ToastOptions) => void;
+    alert: (options: MessageOptions) => void;
     confirm: (options: MessageOptions) => Promise<boolean>;
     prompt: (options: MessageOptions) => Promise<string | null>;
-    success: (title: string, description?: string) => void;
-    error: (title: string, description?: string) => void;
 }
 /**
  * 🏗️ DIALOG SERVICE PROTOCOL

@@ -76,6 +76,8 @@ export interface SappOptions {
     discovery?: IDiscoveryService;
     /** Translation setup: default locale, fallback and Shell-level messages. */
     i18n?: I18nOptions;
+    /** Default currency for `$f.formatMoney()` (default `VND`). A call site can still override it. */
+    currency?: string;
     /** Logo / name shown by the theme; also sets the favicon and document title. */
     branding?: BrandingOptions;
 }

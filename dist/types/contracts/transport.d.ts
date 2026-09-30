@@ -2,6 +2,18 @@
  * 🌐 Transport Contracts (API / Socket protocols)
  */
 import type { IProtocol } from './protocol';
+/**
+ * One sort key. A list query sorts by a LIST of these, applied in order: the first rule decides,
+ * the next only breaks its ties.
+ *
+ * It lives in the contracts because three layers have to agree on it — the grid that produces it
+ * (`display.data-table`), the app's API client that serialises it, and the backend that reads it.
+ * Two loose `sortField` / `sortOrder` fields cannot express a second key.
+ */
+export interface SortRule {
+    field: string;
+    order: 'asc' | 'desc';
+}
 export interface RequestOptions {
     method?: string;
     headers?: Record<string, string>;

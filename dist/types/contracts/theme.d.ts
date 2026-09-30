@@ -2,14 +2,13 @@
  * 🎨 Theme Contract
  * A theme registers the Shell UI (layout, providers, UI kit) into the kernel
  * component registry and creates the UI services the kernel exposes as
- * `$toast`, `$message`, `$dialog`.
+ * `$message` (toasts + alert/confirm/prompt) and `$dialog`.
  */
 import type { App } from 'vue';
 import type { ISuperApp } from './kernel';
 import type { IAppState } from './app-state';
-import type { DialogService, MessageService, ToastService } from './ui';
+import type { DialogService, MessageService } from './ui';
 export interface ThemeServices {
-    toastService: ToastService;
     messageService: MessageService;
     dialogService: DialogService;
     appState: IAppState;
@@ -59,6 +58,8 @@ export interface ThemeConfigState {
     radius: number;
     /** Shadow intensity 0 (flat) → 2. */
     shadow: number;
+    /** Page surface preset id (see `surfaces`). Empty = the tokens.css default. */
+    surface: string;
 }
 export interface IThemeConfig {
     /** Reactive current state (mutate through `set`). */
@@ -71,6 +72,15 @@ export interface IThemeConfig {
         hex: string;
     }>;
     readonly fontStacks: Readonly<Record<string, string>>;
+    /** Web fonts (name → Google Fonts spec). Fetched only when one is selected. */
+    readonly webFonts: Readonly<Record<string, string>>;
+    /** Page surface presets; `label` is an i18n key. */
+    readonly surfaces: ReadonlyArray<{
+        id: string;
+        label: string;
+        light: string;
+        dark: string;
+    }>;
     set(patch: Partial<ThemeConfigState>): void;
     reset(): void;
     /** Re-apply the current state to `:root` (called automatically by `set`). */

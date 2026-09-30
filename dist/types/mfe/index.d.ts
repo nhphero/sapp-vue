@@ -7,6 +7,6 @@ export { createMiniApp } from './createMiniApp';
 export { createFeatureRouter } from './router';
 export { FeatureView } from './FeatureView';
 export { useMiniRouter, useMiniApp, useI18n } from './composables';
-export { defineFeature, defineMfeModule } from '../contracts';
+export { defineMfeModule } from '../contracts';
 export type * from '../contracts/feature';
 //# sourceMappingURL=index.d.ts.map
