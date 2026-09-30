@@ -1,0 +1,1 @@
+{"version":3,"file":"vue-router.d.ts","sourceRoot":"","sources":["../../../src/bridge/vue-router.ts"],"names":[],"mappings":"AAOA,eAAO,MACL,YAAY,OACZ,gBAAgB,OAChB,oBAAoB,OACpB,mBAAmB,OACnB,SAAS,OACT,QAAQ,OACR,kBAAkB,OAClB,mBAAmB,OACnB,UAAU,OACV,UAAU,OACV,UAAU,OACV,cAAc,OACd,qBAAqB,OACrB,mBAAmB,KACD,CAAC;;AAErB,wBAAgC"}

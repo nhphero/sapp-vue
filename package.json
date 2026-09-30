@@ -1,0 +1,87 @@
+{
+  "name": "@nhphero/vue-sapp",
+  "version": "0.1.0",
+  "description": "Super App (ESA) architecture for Vue 3: kernel, protocols, discovery, MF bridge, createSapp / createMiniApp and shared contracts.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/nhphero/sapp-vue.git"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./contracts": {
+      "types": "./dist/types/contracts/index.d.ts",
+      "import": "./dist/contracts.js"
+    },
+    "./mfe": {
+      "types": "./dist/types/mfe/index.d.ts",
+      "import": "./dist/mfe.js"
+    },
+    "./app": {
+      "types": "./dist/types/app/index.d.ts",
+      "import": "./dist/app.js"
+    },
+    "./vite": {
+      "types": "./dist/types/vite/index.d.ts",
+      "import": "./dist/vite.js"
+    },
+    "./bridge/vue": {
+      "types": "./dist/types/bridge/vue.d.ts",
+      "import": "./dist/bridge-vue.js"
+    },
+    "./bridge/pinia": {
+      "types": "./dist/types/bridge/pinia.d.ts",
+      "import": "./dist/bridge-pinia.js"
+    },
+    "./bridge/vue-router": {
+      "types": "./dist/types/bridge/vue-router.d.ts",
+      "import": "./dist/bridge-vue-router.js"
+    },
+    "./src/*": "./src/*"
+  },
+  "scripts": {
+    "build": "rimraf dist && vite build && vue-tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "@vueuse/core": ">=10",
+    "pinia": ">=2",
+    "vue": "^3.4.0",
+    "vue-router": ">=4",
+    "axios": ">=1.7"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@vueuse/core": "10.11.1",
+    "axios": "1.7.7",
+    "pinia": "2.3.1",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.4.3",
+    "vite": "^5.2.2",
+    "vue": "3.5.13",
+    "vue-router": "4.5.1",
+    "vue-tsc": "^2.0.7"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
