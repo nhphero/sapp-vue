@@ -179,6 +179,8 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
   gp.$t = (key: string, params?: any) => i18n.t(key, params);
   gp.$f = format;
   superApp.$f = format;
+  gp.$env = superApp.$env;
+  app.provide('$env', superApp.$env);
   app.provide('$i18n', i18n);
   app.provide('$f', format);
   app.provide('ui-store', uiStore);

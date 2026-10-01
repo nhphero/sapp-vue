@@ -43,6 +43,7 @@ export class DiscoveryService implements IDiscoveryService {
   private staticConfig: SystemConfig = {};
   private apiBase = '';
   private platform: any = null;
+  private environment: Record<string, string> = {};
   private apps: any[] | null = null;
   private initialized = false;
 
@@ -63,6 +64,7 @@ export class DiscoveryService implements IDiscoveryService {
     if (payload && typeof payload === 'object' && 'system' in payload) {
       const environment = Object.fromEntries(Object.entries(payload.environment ?? {})
         .filter(([key, value]) => typeof value === 'string' && !LOCAL_ONLY.includes(key)));
+      this.environment = environment as Record<string, string>;
       this.config = { ...(payload.system ?? {}), ...this.staticConfig, ...environment };
       this.platform = payload.platform ?? null;
       this.apps = Array.isArray(payload.apps) ? payload.apps : null;
@@ -73,6 +75,11 @@ export class DiscoveryService implements IDiscoveryService {
     if (!this.apiBase) console.warn('🛰️ [Discovery] No master_api_url in config.json or the build — backend discovery skipped.');
     this.config = { ...(system ?? {}), ...this.staticConfig };
     return false;
+  }
+
+  /** The public environment, from the last discovery.json. */
+  getEnvironment(): Record<string, string> {
+    return { ...this.environment };
   }
 
   /** Admin → Config, from the last discovery.json (null: not served). */

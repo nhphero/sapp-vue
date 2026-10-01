@@ -1,3 +1,4 @@
+import type { IEnvironment } from './env';
 /**
  * 🏛️ Kernel Contract
  * Full host surface exposed by the Shell's `SuperApp` to MFEs, business
@@ -97,6 +98,8 @@ export interface KernelState {
     serverApps: RegisteredApp[];
     /** The platform config (Admin → Config), loaded by `loadPlatformConfig()`; null until it answers. */
     platformConfig: PlatformConfig | null;
+    /** The public environment (Admin → Public Environment), key → value — read it through `$env`. */
+    environment: Record<string, string>;
     /** CSS scope key of the mini app on screen (set by the Shell's app container); '' on Shell pages. */
     activeCssScope: string;
 }
@@ -134,6 +137,8 @@ export interface ISuperApp extends ISuperAppCore {
     $i18n: II18n;
     /** Formatting service: `$f.formatDate(iso)`, `$f.formatMoney(n)`. Follows `$i18n.locale`. */
     $f: IFormatService;
+    /** The public environment: `$env.get('BIZ_API_SERVER')`, `$env.has(…)`, `$env.require(…)` (contracts/env.ts). */
+    $env: IEnvironment;
     /** Dynamic access to any registered protocol or business module (`$auth`, `$socket`...). */
     [dynamic: `$${string}`]: any;
     init(options: KernelInitOptions): void;

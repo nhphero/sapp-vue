@@ -6,6 +6,7 @@ import {
 import type { Router } from 'vue-router';
 import { useLocalStorage } from '@vueuse/core';
 import { createAuthState } from '../services/auth';
+import { createEnvironment } from '../services/env';
 import type {
   ISuperApp,
   ISuperAppModule,
@@ -32,6 +33,7 @@ import type {
   PlatformConfig,
   BrandingOptions,
   IDiscoveryService,
+  IEnvironment,
 } from '../contracts';
 import { REGISTERED_APPS_STORAGE_KEY, SUPERAPP_EVENTS } from '../contracts';
 
@@ -63,6 +65,7 @@ export class SuperApp implements ISuperApp {
     serverApps: [] as RegisteredApp[], // 📦 Local apps served by the backend's package registry
     platformConfig: null as PlatformConfig | null, // ⚙️ Admin → Config
     activeCssScope: '', // 🎨 CSS scope of the mini app on screen (mfeScopedCssPlugin)
+    environment: {} as Record<string, string>, // 🌐 public environment (Admin → Public Environment)
   });
 
   private loadingPromises: Map<string, Promise<void>> = new Map();
@@ -81,6 +84,8 @@ export class SuperApp implements ISuperApp {
   /** Set by `createSapp` (it knows the token key and the message service); see contracts/api-client.ts. */
   declare public createApi: CreateApi;
   public $f!: IFormatService;
+  /** The public environment over `state.environment` (contracts/env.ts). */
+  public $env: IEnvironment = createEnvironment(() => this.state.environment);
   // Resolved through the `$` proxy from the registered `i18n` protocol (no runtime field).
   public declare $i18n: II18n;
 
@@ -386,6 +391,7 @@ export class SuperApp implements ISuperApp {
     const merged = source.getAll();
     const before = this.state.discovery ?? {};
     this.state.discovery = merged;
+    this.state.environment = source.getEnvironment?.() ?? {};
     if (this.$config) {
       const manifest = (this.$config.moduleManifest ??= {});
       for (const [key, value] of Object.entries(merged)) {

@@ -1,3 +1,4 @@
+import type { IEnvironment } from './env';
 /**
  * Template globals provided by createSapp (Shell) and createMiniApp (mini apps).
  * Prefer `$c('ui.button')` in templates over injecting the kernel just to resolve a component.
@@ -32,6 +33,8 @@ declare module 'vue' {
         }) => string;
         /** Format: `{{ $f.formatMoney(row.price) }}`, `{{ $f.formatDate(row.updatedAt) }}`. */
         $f: IFormatService;
+        /** Public environment: `{{ $env.get('BIZ_API_SERVER') }}`, `v-if="$env.has('BIZ_API_SERVER')"`. */
+        $env: IEnvironment;
     }
 }
 export {};

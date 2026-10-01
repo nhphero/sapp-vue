@@ -11,7 +11,7 @@ Kernel của Super App cho Vue 3: `SuperApp` (registry), protocol, service, brid
 | `src/contracts/` | `ISuperApp`, `ISuperAppCore`, `IProtocol`, `ISuperAppModule`, `IMfeModule`, registry shapes, transport, discovery, app-state, bridge, hằng số | Shell + mini app |
 | `src/kernel/` | class `SuperApp` (implements `ISuperApp`) | Shell |
 | `src/protocols/` | `ApiProtocol` (`$api`), `SocketProtocol` (`$socket`) | Shell |
-| `src/services/` | `discoveryService` (discovery API → `/config.json` → **`<backend>/environment.json`** đè lên, chờ đầu tiên khi init; `master_api_url` giữ local; `reloadEnvironment()`), `fetchEnvironment`, `createAppState` | Shell |
+| `src/services/` | `discoveryService` — boot **2 request**: `/config.json` (deployment) + **`<backend>/discovery.json`** (system discovery, environment, Admin → Config, registry app); config = system ← config.json ← environment (`master_api_url` giữ local); `reload()` khi admin đổi; kernel `applyDiscovery()` áp platform + registry không fetch thêm, `loadServerApps` / `loadPlatformConfig` / `reloadEnvironment` = fetch lại discovery.json (backend cũ: file tĩnh như trước). `createAppState` | Shell |
 | `src/bridge/` | `installMfBridge` (Shell), proxy `vue` / `pinia` / `vue-router` (mini app) | cả hai |
 | `src/mfe/` | `createMiniApp`, feature router, `FeatureView`, `useMiniRouter`, `useMiniApp` (mini app dùng `app.useApp()` thay vì hook này) | mini app |
 | `src/vite/` | `vueBridgePlugin` cho `vite.config.ts` của mini app | mini app |

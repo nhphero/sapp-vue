@@ -1,7 +1,7 @@
 import { reactive, markRaw, ref, watch, watchEffect, nextTick, defineAsyncComponent, shallowRef, triggerRef, defineComponent, h, provide, inject, type App } from 'vue';
 import type { Router } from 'vue-router';
 import { useLocalStorage } from '@vueuse/core';
-import type { ISuperApp, ISuperAppModule, SappInstallable, IProtocol, KernelInitOptions, KernelConfig, KernelState, ComponentRegistration, SkillRegistration, CommandRegistration, ModuleEntryRegistration, PathChangeHandler, RegisteredApp, AppRegistrationInput, AppUpdateInput, PingResult, IAppState, IAuthState, IFormatService, IPolicyService, CreateApi, II18n, PlatformConfig, IDiscoveryService } from '../contracts';
+import type { ISuperApp, ISuperAppModule, SappInstallable, IProtocol, KernelInitOptions, KernelConfig, KernelState, ComponentRegistration, SkillRegistration, CommandRegistration, ModuleEntryRegistration, PathChangeHandler, RegisteredApp, AppRegistrationInput, AppUpdateInput, PingResult, IAppState, IAuthState, IFormatService, IPolicyService, CreateApi, II18n, PlatformConfig, IDiscoveryService, IEnvironment } from '../contracts';
 /** @deprecated Use `KernelInitOptions` from `@nhphero/vue-sapp` contracts. */
 export type AppConfig = KernelInitOptions;
 export declare class SuperApp implements ISuperApp {
@@ -27,6 +27,8 @@ export declare class SuperApp implements ISuperApp {
     /** Set by `createSapp` (it knows the token key and the message service); see contracts/api-client.ts. */
     createApi: CreateApi;
     $f: IFormatService;
+    /** The public environment over `state.environment` (contracts/env.ts). */
+    $env: IEnvironment;
     $i18n: II18n;
     /** The Proxy returned by the constructor; always hand THIS out (arrow fields capture the raw target as `this`). */
     private _self;

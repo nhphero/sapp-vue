@@ -18,6 +18,7 @@ export declare class DiscoveryService implements IDiscoveryService {
     private staticConfig;
     private apiBase;
     private platform;
+    private environment;
     private apps;
     private initialized;
     initialize(superApp?: {
@@ -27,6 +28,8 @@ export declare class DiscoveryService implements IDiscoveryService {
     }): Promise<void>;
     /** Fetches `<backend>/discovery.json` again (after an admin change) and merges it. */
     reload(): Promise<boolean>;
+    /** The public environment, from the last discovery.json. */
+    getEnvironment(): Record<string, string>;
     /** Admin → Config, from the last discovery.json (null: not served). */
     getPlatform(): any | null;
     /** The app registry rows, from the last discovery.json (null: not served). */

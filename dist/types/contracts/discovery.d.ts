@@ -24,6 +24,8 @@ export interface IDiscoveryService {
     getAll(): SystemConfig;
     /** Fetches `<backend>/discovery.json` again; false when the backend does not serve it. */
     reload?(): Promise<boolean>;
+    /** The public environment from the last discovery.json (`master_api_url` left out). */
+    getEnvironment?(): Record<string, string>;
     /** Admin → Config from the last discovery.json (null: not served). */
     getPlatform?(): any | null;
     /** The app registry rows from the last discovery.json (null: not served). */
