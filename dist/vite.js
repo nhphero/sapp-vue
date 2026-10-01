@@ -17,8 +17,8 @@ function v() {
           e.push(`export const ${n} = _Vue.${n};`);
         e.push("export const isVue2 = false;"), e.push("export const isVue3 = true;"), e.push("export const Vue = _Vue;"), e.push("export const Vue2 = undefined;"), e.push("export const install = function() {};"), e.push("export const set = function(t, k, v) { t[k] = v; };"), e.push("export const del = function(t, k) { delete t[k]; };"), e.push("export default _Vue;"), o = e.join(`
 `);
-      } catch (r) {
-        console.error("[VUE_BRIDGE] Failed to read Vue exports:", r), o = `export * from 'vue';
+      } catch (s) {
+        console.error("[VUE_BRIDGE] Failed to read Vue exports:", s), o = `export * from 'vue';
 export { default } from 'vue';`;
       }
     },
@@ -32,13 +32,13 @@ export { default } from 'vue';`;
 }
 function m(o) {
   let t = 2166136261;
-  for (let r = 0; r < o.length; r++)
-    t ^= o.charCodeAt(r), t = Math.imul(t, 16777619);
+  for (let s = 0; s < o.length; s++)
+    t ^= o.charCodeAt(s), t = Math.imul(t, 16777619);
   return (t >>> 0).toString(16).padStart(8, "0");
 }
 const l = /@property\s+--[\w-]+\s*\{[^}]*\}/g;
 function g(o = {}) {
-  const t = o.match ?? ((u) => /\/mfe\.css(\?|$)/.test(u)), r = o.scope ?? "#module-viewport, [data-portal]";
+  const t = o.match ?? ((u) => /\/mfe\.css(\?|$)/.test(u)), s = o.scope ?? "#module-viewport, [data-portal]";
   return {
     name: "sapp:mfe-scoped-css",
     transform(u, c) {
@@ -46,20 +46,24 @@ function g(o = {}) {
       const e = u.match(l) ?? [], n = u.replace(l, "");
       return { code: `${e.join(`
 `)}
-@scope (${r}) {
+@scope (${s}) {
 ${n}
 }
 `, map: null };
     },
-    generateBundle(u, c) {
-      if (o.inlineCss === !1) return;
-      const e = Object.values(c).filter((s) => s.type === "asset" && s.fileName.endsWith(".css")), n = Object.values(c).find((s) => s.type === "chunk" && s.isEntry);
-      if (!e.length || !n || n.type !== "chunk") return;
-      const i = e.map((s) => s.type === "asset" ? String(s.source) : "").join(`
+    // `post`: Vite's own CSS plugin emits the library's style.css in generateBundle — run after it.
+    generateBundle: {
+      order: "post",
+      handler(u, c) {
+        if (o.inlineCss === !1) return;
+        const e = Object.values(c).filter((r) => r.type === "asset" && r.fileName.endsWith(".css")), n = Object.values(c).find((r) => r.type === "chunk" && r.isEntry);
+        if (!e.length || !n || n.type !== "chunk") return;
+        const i = e.map((r) => r.type === "asset" ? String(r.source) : "").join(`
 `), p = `sapp-css-${m(i)}`, a = `(()=>{if(typeof document==='undefined'||document.getElementById(${JSON.stringify(p)}))return;const s=document.createElement('style');s.id=${JSON.stringify(p)};s.textContent=${JSON.stringify(i)};document.head.appendChild(s);})();
 `;
-      n.code = a + n.code;
-      for (const s of e) delete c[s.fileName];
+        n.code = a + n.code;
+        for (const r of e) delete c[r.fileName];
+      }
     }
   };
 }

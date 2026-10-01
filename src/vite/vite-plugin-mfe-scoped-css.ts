@@ -50,7 +50,10 @@ export function mfeScopedCssPlugin(options: MfeScopedCssOptions = {}): Plugin {
       const body = code.replace(PROPERTY_RE, '');
       return { code: `${properties.join('\n')}\n@scope (${scope}) {\n${body}\n}\n`, map: null };
     },
-    generateBundle(_options, bundle) {
+    // `post`: Vite's own CSS plugin emits the library's style.css in generateBundle — run after it.
+    generateBundle: {
+      order: 'post',
+      handler(_options, bundle) {
       if (options.inlineCss === false) return;
       const sheets = Object.values(bundle).filter(file => file.type === 'asset' && file.fileName.endsWith('.css'));
       const entry = Object.values(bundle).find(file => file.type === 'chunk' && file.isEntry);
@@ -62,6 +65,7 @@ export function mfeScopedCssPlugin(options: MfeScopedCssOptions = {}): Plugin {
         + `document.head.appendChild(s);})();\n`;
       entry.code = inject + entry.code;
       for (const sheet of sheets) delete bundle[sheet.fileName];
+      },
     },
   };
 }
