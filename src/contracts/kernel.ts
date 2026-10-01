@@ -27,6 +27,7 @@ import type { IPolicyService } from './policy';
 import type { CreateApi } from './api-client';
 import type { IFormatService } from './format';
 import type { II18n } from './i18n';
+import type { ThemeConfigState } from './theme';
 
 /** Vue reactivity primitives handed to MFEs to guarantee a single runtime. */
 export interface VueBridgeContext {
@@ -78,6 +79,11 @@ export interface PlatformConfig {
     /** Recently used apps shown in the app switcher; 0 hides the row. */
     recentCount: number;
   };
+  /**
+   * The platform's look (Admin → Theme): the base every user's theme panel starts from — what a user
+   * changes sits on top, unless `enforce` locks it. Applied by the theme (`IThemeConfig.useDefaults`).
+   */
+  look?: Partial<ThemeConfigState> & { enforce?: boolean };
 }
 
 export interface KernelConfig {

@@ -80,16 +80,21 @@ export interface IThemeConfig {
   /** Page surface presets; `label` is an i18n key. */
   readonly surfaces: ReadonlyArray<{ id: string; label: string; light: string; dark: string }>;
   set(patch: Partial<ThemeConfigState>): void;
-  /** Back to the defaults — the platform's (Admin → Config) when set, else the theme's. */
+  /** Back to the defaults — the platform's (Admin → Theme) when set, else the theme's. */
   reset(): void;
   /**
-   * The platform's look (Admin → Config): the base the user's own changes sit on. Only what the user
+   * The platform's look (Admin → Theme): the base the user's own changes sit on. Only what the user
    * changed is kept in localStorage, so a later platform change reaches everyone who did not touch it.
    * `enforce` (users may not override): the user's changes are dropped and `set` does nothing.
    */
   useDefaults(patch: Partial<ThemeConfigState>, options?: { enforce?: boolean }): void;
   /** Reactive: true while the platform enforces its look (see `useDefaults`). */
   readonly locked: boolean;
+  /**
+   * Shows a look on the page without touching the state or localStorage — Admin → Theme while it edits
+   * the platform's look. `null` ends the preview and puts the current state back.
+   */
+  preview(look: Partial<ThemeConfigState> | null): void;
   /** Re-apply the current state to `:root` (called automatically by `set`). */
   apply(): void;
   toggle(force?: boolean): void;
