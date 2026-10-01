@@ -208,7 +208,11 @@ class ke {
     return String(e || t?.getBaseUrl?.() || "").replace(/\/+$/, "");
   };
   packageEntryUrl = (e) => `${this.getApiBaseUrl()}/packages/${encodeURIComponent(e)}/index.js`;
-  packageFilesEntryUrl = (e, t) => `${this.getApiBaseUrl()}/package-files/${encodeURIComponent(e)}/${encodeURIComponent(t)}/index.js`;
+  getPackageFilesBaseUrl = () => {
+    const e = this.state.discovery?.["packages.url"];
+    return String(e || `${this.getApiBaseUrl()}/package-files`).replace(/\/+$/, "");
+  };
+  packageFilesEntryUrl = (e, t) => `${this.getPackageFilesBaseUrl()}/${encodeURIComponent(e)}/${encodeURIComponent(t)}/index.js`;
   /**
    * A package app loads straight from its extracted version (`package-files/<package>/<version>`);
    * only while that version is unknown (no server answer yet) does it go through the id shim.
@@ -219,7 +223,7 @@ class ke {
   loadServerApps = async () => {
     const e = this.getApiBaseUrl();
     try {
-      const t = new AbortController(), r = setTimeout(() => t.abort(), 4e3), n = await fetch(`${e}/packages/apps.json`, { cache: "no-store", signal: t.signal });
+      const t = new AbortController(), r = setTimeout(() => t.abort(), 4e3), n = await fetch(`${this.getPackageFilesBaseUrl()}/apps.json`, { cache: "no-cache", signal: t.signal });
       if (clearTimeout(r), !n.ok) throw new Error(`HTTP ${n.status}`);
       const i = await n.json();
       this.state.serverApps = i.map((s) => ({
@@ -1263,4 +1267,4 @@ export {
   Qe as j,
   xe as k
 };
-//# sourceMappingURL=createSapp-BYsyLHPw.js.map
+//# sourceMappingURL=createSapp-CNZPjush.js.map

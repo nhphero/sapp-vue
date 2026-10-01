@@ -69,7 +69,7 @@ export interface RegisteredApp {
   url: string;
   /**
    * Resolved ESM entry: `${url}/src/index.ts` (dev) / `${url}/index.js` (prod); a package app:
-   * `<api>/package-files/<package>/<version>/index.js` (the extracted version), or the
+   * `<package files>/<package>/<version>/index.js` (the extracted version, a static file), or the
    * `<api>/packages/<id>/index.js` shim while its version is not known yet.
    */
   entryUrl: string;

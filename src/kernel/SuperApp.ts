@@ -255,8 +255,13 @@ export class SuperApp implements ISuperApp {
 
   public packageEntryUrl = (appId: string): string => `${this.getApiBaseUrl()}/packages/${encodeURIComponent(appId)}/index.js`;
 
+  public getPackageFilesBaseUrl = (): string => {
+    const configured = this.state.discovery?.['packages.url'];
+    return String(configured || `${this.getApiBaseUrl()}/package-files`).replace(/\/+$/, '');
+  };
+
   public packageFilesEntryUrl = (pkg: string, version: string): string =>
-    `${this.getApiBaseUrl()}/package-files/${encodeURIComponent(pkg)}/${encodeURIComponent(version)}/index.js`;
+    `${this.getPackageFilesBaseUrl()}/${encodeURIComponent(pkg)}/${encodeURIComponent(version)}/index.js`;
 
   /**
    * A package app loads straight from its extracted version (`package-files/<package>/<version>`);
@@ -275,7 +280,8 @@ export class SuperApp implements ISuperApp {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 4000);
-      const res = await fetch(`${base}/packages/apps.json`, { cache: 'no-store', signal: controller.signal });
+      // A static file (written by the backend on every change), served by the package files host.
+      const res = await fetch(`${this.getPackageFilesBaseUrl()}/apps.json`, { cache: 'no-cache', signal: controller.signal });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const list: Array<{ appId: string; package: string; version: string; title?: string; description?: string; icon?: string }> = await res.json();

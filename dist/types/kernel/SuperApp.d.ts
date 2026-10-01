@@ -77,6 +77,7 @@ export declare class SuperApp implements ISuperApp {
     formatAppEntryUrl: (url: string) => string;
     getApiBaseUrl: () => string;
     packageEntryUrl: (appId: string) => string;
+    getPackageFilesBaseUrl: () => string;
     packageFilesEntryUrl: (pkg: string, version: string) => string;
     /**
      * A package app loads straight from its extracted version (`package-files/<package>/<version>`);
