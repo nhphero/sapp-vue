@@ -32,7 +32,7 @@ import type {
   PlatformConfig,
   BrandingOptions,
 } from '../contracts';
-import { REGISTERED_APPS_STORAGE_KEY, HIDDEN_DEFAULT_APPS_STORAGE_KEY, SUPERAPP_EVENTS } from '../contracts';
+import { REGISTERED_APPS_STORAGE_KEY, SUPERAPP_EVENTS } from '../contracts';
 
 /** @deprecated Use `KernelInitOptions` from `@nhphero/vue-sapp` contracts. */
 export type AppConfig = KernelInitOptions;
@@ -277,44 +277,75 @@ export class SuperApp implements ISuperApp {
     return app.package && app.version ? this.packageFilesEntryUrl(app.package, app.version) : this.packageEntryUrl(app.id);
   };
 
-  /** True once `/packages/apps.json` answered — only then may stale server apps be dropped. */
+  /** True once the server's registry answered — until then the built-ins stand in. */
   private serverAppsLoaded = false;
 
+  /**
+   * The app registry (backend sys_apps) from the static `<package files>/registry.json`; a server older
+   * than the registry answers `apps.json` (package apps only) instead.
+   */
   public loadServerApps = async (): Promise<RegisteredApp[]> => {
-    const base = this.getApiBaseUrl();
-    try {
+    const fetchJson = async (name: string) => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 4000);
-      // A static file (written by the backend on every change), served by the package files host.
-      const res = await fetch(`${this.getPackageFilesBaseUrl()}/apps.json`, { cache: 'no-cache', signal: controller.signal });
-      clearTimeout(timer);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const list: Array<{ appId: string; slug?: string; package: string; version: string; channel?: 'stable' | null; title?: string; description?: string; icon?: string }> = await res.json();
-      this.state.serverApps = list.map((app): RegisteredApp => ({
-        id: app.appId,
-        slug: app.slug || app.appId,
-        name: app.title || app.appId,
-        type: 'package',
-        package: app.package,
-        version: app.version,
-        channel: app.channel ?? null,
-        url: base,
-        entryUrl: this.packageFilesEntryUrl(app.package, app.version),
-        description: app.description || '',
-        icon: app.icon || 'Package',
-        isSystem: true,
-        isEnabled: true,
-        managedBy: 'server',
-        updatedAt: new Date().toISOString(),
-      }));
+      try {
+        // Static files the backend rewrites on every change, served by the package files host.
+        const res = await fetch(`${this.getPackageFilesBaseUrl()}/${name}`, { cache: 'no-cache', signal: controller.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+    try {
+      let rows: any[];
+      try {
+        rows = (await fetchJson('registry.json'))?.apps ?? [];
+      } catch {
+        rows = ((await fetchJson('apps.json')) ?? []).map((app: any) => ({ ...app, id: app.appId, name: app.title, type: 'package' }));
+      }
+      this.state.serverApps = rows.filter(row => row?.id).map(row => this.toRegisteredApp(row));
       this.serverAppsLoaded = true;
     } catch (err: any) {
-      console.warn(`📦 [sys-kernel] Server apps unavailable (${err?.message ?? err}) — registry unchanged.`);
+      console.warn(`📦 [sys-kernel] App registry unavailable (${err?.message ?? err}) — built-in apps only.`);
       return this.state.serverApps;
     }
     this.syncManifestWithRegisteredApps();
     this.emit(SUPERAPP_EVENTS.APPS_UPDATED, this.getRegisteredApps());
     return this.state.serverApps;
+  };
+
+  /** Built-in remote URLs per environment: the Shell config's `<id>.url`, else the build's env. */
+  private builtInUrl = (id: string): string => {
+    const env = (import.meta as any).env ?? {};
+    const fallback: Record<string, string> = {
+      admin: env.VITE_ADMIN_URL || 'http://localhost:4403',
+      workspace: env.VITE_WORKSPACE_URL || 'http://localhost:4409',
+    };
+    return String(this.state.discovery?.[`${id}.url`] || fallback[id] || '').replace(/\/+$/, '');
+  };
+
+  /** A registry row (registry.json / apps.registry.*) as the Shell's record. */
+  private toRegisteredApp = (row: any): RegisteredApp => {
+    const id = String(row.id);
+    const common = {
+      id,
+      slug: row.slug || id,
+      name: row.name || id,
+      description: row.description || '',
+      icon: row.icon || (row.type === 'package' ? 'Package' : 'Layers'),
+      isSystem: !!row.isSystem,
+      isEnabled: row.isEnabled !== false,
+      managedBy: 'server' as const,
+      updatedAt: row.updatedAt || new Date().toISOString(),
+    };
+    if (row.type === 'package') {
+      const app = { ...common, type: 'package' as const, package: row.package ?? undefined, version: row.version ?? undefined, channel: row.channel ?? null, url: this.getApiBaseUrl() };
+      return { ...app, entryUrl: this.resolveAppEntry(app) };
+    }
+    // An empty URL (built-ins) comes from the Shell config of this environment.
+    const url = String(row.url || this.builtInUrl(id)).replace(/\/+$/, '');
+    return { ...common, type: 'remote', url, entryUrl: url ? this.formatAppEntryUrl(url) : '' };
   };
 
   /** Branding given to createSapp, kept so an emptied platform field falls back to it. */
@@ -390,132 +421,35 @@ export class SuperApp implements ISuperApp {
     return pending;
   };
 
-  private getDefaultApps = (): RegisteredApp[] => {
-    const isDev = (import.meta as any).env?.DEV ?? true;
-    const adminBase = (this.state.discovery?.['admin.url'] || (import.meta as any).env?.VITE_ADMIN_URL || 'http://localhost:4403').replace(/\/+$/, '');
-    const workspaceBase = (this.state.discovery?.['workspace.url'] || (import.meta as any).env?.VITE_WORKSPACE_URL || 'http://localhost:4409').replace(/\/+$/, '');
-
-    const apps: RegisteredApp[] = [
-      ...this.state.serverApps,
-      ...this.getConfiguredApps(),
-      {
-        id: 'workspace',
-        name: 'Workspace Hub',
-        url: workspaceBase,
-        entryUrl: workspaceBase.endsWith('.js') || workspaceBase.endsWith('.ts') ? workspaceBase : `${workspaceBase}${isDev ? '/src/index.ts' : '/index.js'}`,
-        description: 'Logic Orchestration & Flow Designer',
-        icon: 'Globe',
-        isSystem: true,
-        isEnabled: true,
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 'admin',
-        name: 'Admin Management',
-        url: adminBase,
-        entryUrl: adminBase.endsWith('.js') || adminBase.endsWith('.ts') ? adminBase : `${adminBase}${isDev ? '/src/index.ts' : '/index.js'}`,
-        description: 'Platform Governance & Applications Registry',
-        icon: 'Shield',
-        isSystem: true,
-        isEnabled: true,
-        updatedAt: new Date().toISOString()
-      }
-    ];
-    // One record per id; earlier sources win: server apps, then config.json, then the built-ins.
-    const seen = new Set<string>();
-    return apps.filter(app => !seen.has(app.id) && seen.add(app.id));
-  };
+  /** Stand-ins while the server's registry has not answered (it seeds the same built-ins). */
+  private getBuiltInApps = (): RegisteredApp[] => [
+    { id: 'admin', name: 'Admin Management', description: 'Platform Governance & Applications Registry', icon: 'Shield', isSystem: true },
+    { id: 'workspace', name: 'Workspace Hub', description: 'Logic Orchestration & Flow Designer', icon: 'Globe', isSystem: true },
+  ].map(app => this.toRegisteredApp({ ...app, type: 'remote', url: '' }));
 
   /**
    * Apps declared by the Shell's config (`config.json` / discovery) under `registry.apps`:
    * `[{ id, name, description?, icon?, type?, package? }]`. A `remote` app (default) is mounted from its
    * `<id>.url` entry; a `package` app needs no URL — the backend serves its deployed version. They join
-   * the defaults, so a new mini app is listed by configuration — no code change, no per-browser setup.
+   * the server's registry (which wins for an id it has).
    */
   private getConfiguredApps = (): RegisteredApp[] => {
-    const isDev = (import.meta as any).env?.DEV ?? true;
     const declared = this.state.discovery?.['registry.apps'];
     if (!Array.isArray(declared)) return [];
     return declared
       .filter((app: any) => app?.id && (app.type === 'package' || typeof this.state.discovery?.[`${app.id}.url`] === 'string'))
-      .map((app: any): RegisteredApp => {
-        if (app.type === 'package') {
-          return {
-            id: String(app.id),
-            name: app.name || String(app.id),
-            type: 'package',
-            package: app.package,
-            url: this.getApiBaseUrl(),
-            entryUrl: this.packageEntryUrl(String(app.id)),
-            description: app.description || '',
-            icon: app.icon || 'Layers',
-            isSystem: true,
-            isEnabled: app.isEnabled ?? true,
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        const base = String(this.state.discovery[`${app.id}.url`]).replace(/\/+$/, '');
-        return {
-          id: String(app.id),
-          name: app.name || String(app.id),
-          type: 'remote',
-          url: base,
-          entryUrl: base.endsWith('.js') || base.endsWith('.ts') ? base : `${base}${isDev ? '/src/index.ts' : '/index.js'}`,
-          description: app.description || '',
-          icon: app.icon || 'Layers',
-          isSystem: true,
-          isEnabled: app.isEnabled ?? true,
-          updatedAt: new Date().toISOString(),
-        };
-      });
+      .map((app: any): RegisteredApp => ({ ...this.toRegisteredApp({ ...app, isSystem: true, url: '' }), managedBy: undefined }));
   };
 
+  /** The server's registry (sys_apps), then config-declared apps; the built-ins until the server answers. */
   public getRegisteredApps = (): RegisteredApp[] => {
-    try {
-      const stored = localStorage.getItem(REGISTERED_APPS_STORAGE_KEY);
-      const defaults = this.getDefaultApps();
-      if (!stored) {
-        localStorage.setItem(REGISTERED_APPS_STORAGE_KEY, JSON.stringify(defaults));
-        return defaults;
-      }
-      const parsed: RegisteredApp[] = JSON.parse(stored);
-      if (!Array.isArray(parsed)) return defaults;
-
-      // Merge defaults if missing (unless the user renamed that default away)
-      const hidden = this.getHiddenDefaults();
-      defaults.forEach(def => {
-        const found = parsed.find(a => a.id === def.id);
-        if (!found) {
-          if (!hidden.has(def.id)) parsed.unshift(def);
-        } else {
-          found.isSystem = true;
-          if (!found.entryUrl) found.entryUrl = this.formatAppEntryUrl(found.url);
-        }
-      });
-      // Server apps: the backend is the source of truth for what they are; ones it no longer has go away.
-      const fromServer = new Map(this.state.serverApps.map(app => [app.id, app]));
-      for (let i = parsed.length - 1; i >= 0; i--) {
-        const app = parsed[i];
-        const server = fromServer.get(app.id);
-        if (server) {
-          const { isEnabled } = app;
-          parsed[i] = { ...app, ...server, isEnabled: isEnabled ?? true };
-        } else if (app.managedBy === 'server' && this.serverAppsLoaded) {
-          parsed.splice(i, 1);
-        }
-      }
-      // A package app's entry follows the backend URL, which may differ per environment.
-      parsed.forEach(app => {
-        if (app.type === 'package') {
-          app.url = this.getApiBaseUrl();
-          app.entryUrl = this.resolveAppEntry(app);
-        }
-      });
-      return parsed;
-    } catch (err) {
-      console.error('Failed to read registered apps from storage:', err);
-      return this.getDefaultApps();
-    }
+    const sources = [
+      ...this.state.serverApps,
+      ...this.getConfiguredApps(),
+      ...(this.serverAppsLoaded ? [] : this.getBuiltInApps()),
+    ];
+    const seen = new Set<string>();
+    return sources.filter(app => !seen.has(app.id) && seen.add(app.id));
   };
 
   public syncManifestWithRegisteredApps = () => {
@@ -530,106 +464,51 @@ export class SuperApp implements ISuperApp {
       if (moduleId && !manifest[moduleId]) manifest[moduleId] = this.formatAppEntryUrl(value);
     }
 
-    const apps = this.getRegisteredApps();
-    apps.forEach(app => {
-      if (app.id && (app.url || app.type === 'package') && app.isEnabled !== false) {
-        const entry = app.type === 'package' ? this.resolveAppEntry(app) : app.entryUrl || this.formatAppEntryUrl(app.url);
-        manifest[app.id] = entry;
-        if (app.id === 'workspace') {
-          manifest['expose'] = entry;
-        }
-      }
-    });
+    for (const app of this.getRegisteredApps()) {
+      if (!app.id || app.isEnabled === false) continue;
+      const entry = app.type === 'package' ? this.resolveAppEntry(app) : app.entryUrl || (app.url ? this.formatAppEntryUrl(app.url) : '');
+      if (!entry) continue;
+      manifest[app.id] = entry;
+      if (app.id === 'workspace') manifest['expose'] = entry;
+    }
   };
 
-  public registerApp = (appData: AppRegistrationInput): RegisteredApp => {
-    const rawId = this.normalizeAppId(appData.id);
-    if (!rawId) throw new Error('Application ID is required');
+  /** Saves through the server's registry (admin), then reloads it — every user sees the change. */
+  private saveApp = async (app: Record<string, unknown>, create: boolean): Promise<RegisteredApp> => {
+    const saved = await this.doAction('apps.registry.save', { app, create });
+    await this.loadServerApps();
+    return this.getRegisteredApps().find(a => a.id === saved?.id) ?? this.toRegisteredApp(saved);
+  };
+
+  public registerApp = async (appData: AppRegistrationInput): Promise<RegisteredApp> => {
+    const id = this.normalizeAppId(appData.id);
+    if (!id) throw new Error('Application ID is required');
     const type = appData.type === 'package' ? 'package' : 'remote';
     if (type === 'remote' && !appData.url) throw new Error('Application Remote URL is required');
-
-    const apps = this.getRegisteredApps();
-    const url = type === 'package' ? this.getApiBaseUrl() : (appData.url as string).trim().replace(/\/+$/, '');
-    const entryUrl = this.resolveAppEntry({ id: rawId, url, type });
-    const existingIndex = apps.findIndex(a => a.id === rawId);
-    const slug = this.normalizeAppId(appData.slug ?? '') || rawId;
-    this.assertSlugFree(apps, rawId, slug);
-
-    const newApp: RegisteredApp = {
-      id: rawId,
-      slug,
-      name: appData.name || rawId,
+    return this.saveApp({
+      id,
+      slug: this.normalizeAppId(appData.slug ?? '') || id,
+      name: appData.name || id,
       type,
-      ...(type === 'package' && appData.package ? { package: appData.package } : {}),
-      url,
-      entryUrl,
+      url: type === 'remote' ? (appData.url as string).trim().replace(/\/+$/, '') : undefined,
+      package: type === 'package' ? appData.package : undefined,
       description: appData.description || '',
       icon: appData.icon || 'Layers',
       isEnabled: appData.isEnabled ?? true,
-      isSystem: existingIndex >= 0 ? !!apps[existingIndex].isSystem : false,
-      updatedAt: new Date().toISOString()
-    };
-
-    if (existingIndex >= 0) {
-      apps[existingIndex] = { ...apps[existingIndex], ...newApp };
-    } else {
-      apps.push(newApp);
-    }
-
-    localStorage.setItem(REGISTERED_APPS_STORAGE_KEY, JSON.stringify(apps));
-    this.syncManifestWithRegisteredApps();
-    this.emit(SUPERAPP_EVENTS.APPS_UPDATED, apps);
-    return newApp;
-  };
-
-  private getHiddenDefaults = (): Set<string> => {
-    try { return new Set<string>(JSON.parse(localStorage.getItem(HIDDEN_DEFAULT_APPS_STORAGE_KEY) || '[]')); } catch { return new Set(); }
+    }, true);
   };
 
   public normalizeAppId = (id: string) => (id || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/^-+|-+$/g, '');
 
-  public updateApp = (id: string, updates: AppUpdateInput): RegisteredApp => {
-    const apps = this.getRegisteredApps();
-    const index = apps.findIndex(a => a.id === id);
-    if (index === -1) throw new Error(`App [${id}] not found`);
-
-    const app = apps[index];
-    const patch: AppUpdateInput = { ...updates };
-    if (patch.url) {
-      patch.url = patch.url.trim().replace(/\/+$/, '');
-    }
-
+  public updateApp = async (id: string, updates: AppUpdateInput): Promise<RegisteredApp> => {
     // The id is the key and stays; the slug — the route — moves.
     if ((updates as any).id !== undefined && this.normalizeAppId((updates as any).id) !== id) {
       throw new Error(`The id of [${id}] cannot change — change its slug (route) instead.`);
     }
-    delete (patch as any).id;
-    if (patch.slug !== undefined) {
-      patch.slug = this.normalizeAppId(patch.slug) || id;
-      this.assertSlugFree(apps, id, patch.slug);
-      if (patch.slug !== (app.slug || id)) console.log(`🔁 [sys-kernel] App ${id}: route /app/${app.slug || id} -> /app/${patch.slug}`);
-    }
-
-    const merged: RegisteredApp = { ...app, ...patch, updatedAt: new Date().toISOString() };
-    if (merged.type === 'package') {
-      merged.url = this.getApiBaseUrl();
-    } else {
-      delete merged.package;
-      if (!merged.url) throw new Error('Application Remote URL is required');
-    }
-    // The entry follows the type and the URL (a package app's entry is keyed by its id).
-    merged.entryUrl = this.resolveAppEntry(merged);
-    apps[index] = merged;
-    localStorage.setItem(REGISTERED_APPS_STORAGE_KEY, JSON.stringify(apps));
-    this.syncManifestWithRegisteredApps();
-    this.emit(SUPERAPP_EVENTS.APPS_UPDATED, apps);
-    return apps[index];
-  };
-
-  /** A route no other app answers to (as its slug or its id). */
-  private assertSlugFree = (apps: RegisteredApp[], appId: string, slug: string) => {
-    const taken = apps.find(a => a.id !== appId && ((a.slug || a.id) === slug || a.id === slug));
-    if (taken) throw new Error(`The route /app/${slug} is taken by [${taken.id}]`);
+    const { id: _key, ...patch } = updates as AppUpdateInput & { id?: string };
+    if (patch.slug !== undefined) patch.slug = this.normalizeAppId(patch.slug) || id;
+    if (patch.url) patch.url = patch.url.trim().replace(/\/+$/, '');
+    return this.saveApp({ id, ...patch }, false);
   };
 
   public findAppByRoute = (key: string): RegisteredApp | undefined => {
@@ -643,21 +522,44 @@ export class SuperApp implements ISuperApp {
     return `/app/${app?.slug || appId}${sub ? `/${sub}` : ''}`;
   };
 
-  public deleteApp = (id: string): boolean => {
-    const apps = this.getRegisteredApps();
-    const target = apps.find(a => a.id === id);
+  public deleteApp = async (id: string): Promise<boolean> => {
+    const target = this.getRegisteredApps().find(a => a.id === id);
     if (!target) return false;
-    if (target.isSystem) {
-      throw new Error(`System application [${id}] cannot be removed.`);
-    }
-
-    const filtered = apps.filter(a => a.id !== id);
-    localStorage.setItem(REGISTERED_APPS_STORAGE_KEY, JSON.stringify(filtered));
-    if (this.$config?.moduleManifest) {
-      delete this.$config.moduleManifest[id];
-    }
-    this.emit(SUPERAPP_EVENTS.APPS_UPDATED, filtered);
+    if (target.isSystem) throw new Error(`System application [${id}] cannot be removed.`);
+    await this.doAction('apps.registry.remove', { id });
+    if (this.$config?.moduleManifest) delete this.$config.moduleManifest[id];
+    await this.loadServerApps();
     return true;
+  };
+
+  /**
+   * Apps this browser registered before the registry moved to the server (localStorage
+   * `erp_registered_apps`): sent once to `apps.registry.import` (admin), then the key is kept as
+   * `<key>.imported`; and the apps the Shell config declares. Remote apps only — package apps were the
+   * server's already.
+   */
+  public importLocalApps = async (): Promise<{ imported: string[]; skipped: string[] }> => {
+    let local: any[] = [];
+    try {
+      local = JSON.parse(localStorage.getItem(REGISTERED_APPS_STORAGE_KEY) || '[]');
+    } catch { /* unreadable: nothing to import */ }
+    // Plus the apps the Shell config declares (`registry.apps`) — their URL stays the config's `<id>.url`.
+    const configured = this.getConfiguredApps().filter(app => app.type !== 'package').map(app => ({ ...app, url: '' }));
+    const candidates = [
+      ...(Array.isArray(local) ? local : []).filter(app => app?.id && app.type !== 'package' && app.managedBy !== 'server' && app.url && !['admin', 'workspace'].includes(app.id)),
+      ...configured,
+    ].filter(app => !this.state.serverApps.some(s => s.id === app.id));
+    if (!candidates.length) {
+      try { localStorage.removeItem(REGISTERED_APPS_STORAGE_KEY); } catch { /* storage blocked */ }
+      return { imported: [], skipped: [] };
+    }
+    const result = await this.doAction('apps.registry.import', { apps: candidates });
+    try {
+      localStorage.setItem(`${REGISTERED_APPS_STORAGE_KEY}.imported`, JSON.stringify(local));
+      localStorage.removeItem(REGISTERED_APPS_STORAGE_KEY);
+    } catch { /* storage blocked */ }
+    if (result?.imported?.length) await this.loadServerApps();
+    return { imported: result?.imported ?? [], skipped: result?.skipped ?? [] };
   };
 
   public pingApp = async (targetUrl: string): Promise<PingResult> => {

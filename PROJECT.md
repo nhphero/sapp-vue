@@ -44,7 +44,7 @@ Proxy `$`: mọi truy cập `superApp.$xyz` được resolve theo thứ tự pro
 
 ## Luồng load một mini app
 
-1. User vào `/app/:moduleId/*` → route `AppGateway` render `AppContainer.vue`.
+1. User vào `/app/<slug>/*` (slug = route đổi được của app; id là khoá cố định — `findAppByRoute(slug)` → id, link theo id/slug cũ được chuyển sang slug hiện tại; link tạo bằng `appPath(id, sub)`) → route `AppGateway` render `AppContainer.vue`.
 2. `AppContainer` tách `baseModuleId` và `subPath`, gọi `superApp.resolveModule(baseModuleId)`.
 3. `resolveModule` tìm URL trong `config.moduleManifest` (từ discovery `admin.url` / `workspace.url`, env `VITE_*_URL`, hoặc registry app), `import(/* @vite-ignore */ url)`, gọi `module.default.install(app, superApp)`, đánh dấu `markModuleInstalled`.
 4. `AppContainer` lấy `superApp.getModuleEntry(baseModuleId)` và render bằng `<component :is>`.

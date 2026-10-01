@@ -102,7 +102,7 @@ export interface KernelState {
   installedModules: Set<string>;
   moduleStates: Record<string, any>;
   discovery: Record<string, any>;
-  /** Local apps the backend serves (`/packages/apps.json`), loaded by `loadServerApps()`. */
+  /** The app registry (backend sys_apps, `<package files>/registry.json`), loaded by `loadServerApps()`. */
   serverApps: RegisteredApp[];
   /** The platform config (Admin → Config), loaded by `loadPlatformConfig()`; null until it answers. */
   platformConfig: PlatformConfig | null;
@@ -202,11 +202,14 @@ export interface ISuperApp extends ISuperAppCore {
   /** Route of an app by its id: `/app/<slug>[/<subPath>]`. */
   appPath(appId: string, subPath?: string): string;
   syncManifestWithRegisteredApps(): void;
-  registerApp(app: AppRegistrationInput): RegisteredApp;
+  /** Registers through the server's app registry (admin) — every user sees it. */
+  registerApp(app: AppRegistrationInput): Promise<RegisteredApp>;
   /** The id stays (the key); `updates.slug` moves the route. */
-  updateApp(id: string, updates: AppUpdateInput): RegisteredApp;
+  updateApp(id: string, updates: AppUpdateInput): Promise<RegisteredApp>;
   normalizeAppId(id: string): string;
-  deleteApp(id: string): boolean;
+  deleteApp(id: string): Promise<boolean>;
+  /** Sends the apps this browser kept in localStorage (before the server registry) to the server, once (admin). */
+  importLocalApps(): Promise<{ imported: string[]; skipped: string[] }>;
   pingApp(targetUrl: string): Promise<PingResult>;
 
   // --- Module lifecycle ---

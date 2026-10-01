@@ -84,34 +84,53 @@ export declare class SuperApp implements ISuperApp {
      * only while that version is unknown (no server answer yet) does it go through the id shim.
      */
     resolveAppEntry: (app: Pick<RegisteredApp, "id" | "url" | "type" | "package" | "version">) => string;
-    /** True once `/packages/apps.json` answered — only then may stale server apps be dropped. */
+    /** True once the server's registry answered — until then the built-ins stand in. */
     private serverAppsLoaded;
+    /**
+     * The app registry (backend sys_apps) from the static `<package files>/registry.json`; a server older
+     * than the registry answers `apps.json` (package apps only) instead.
+     */
     loadServerApps: () => Promise<RegisteredApp[]>;
+    /** Built-in remote URLs per environment: the Shell config's `<id>.url`, else the build's env. */
+    private builtInUrl;
+    /** A registry row (registry.json / apps.registry.*) as the Shell's record. */
+    private toRegisteredApp;
     /** Branding given to createSapp, kept so an emptied platform field falls back to it. */
     private shellBranding;
     loadPlatformConfig: () => Promise<PlatformConfig | null>;
     resolvePackageFileUrl: (pathOrUrl: string) => string;
     private manifestCache;
     loadAppManifest: (appId: string) => Promise<Record<string, any> | null>;
-    private getDefaultApps;
+    /** Stand-ins while the server's registry has not answered (it seeds the same built-ins). */
+    private getBuiltInApps;
     /**
      * Apps declared by the Shell's config (`config.json` / discovery) under `registry.apps`:
      * `[{ id, name, description?, icon?, type?, package? }]`. A `remote` app (default) is mounted from its
      * `<id>.url` entry; a `package` app needs no URL — the backend serves its deployed version. They join
-     * the defaults, so a new mini app is listed by configuration — no code change, no per-browser setup.
+     * the server's registry (which wins for an id it has).
      */
     private getConfiguredApps;
+    /** The server's registry (sys_apps), then config-declared apps; the built-ins until the server answers. */
     getRegisteredApps: () => RegisteredApp[];
     syncManifestWithRegisteredApps: () => void;
-    registerApp: (appData: AppRegistrationInput) => RegisteredApp;
-    private getHiddenDefaults;
+    /** Saves through the server's registry (admin), then reloads it — every user sees the change. */
+    private saveApp;
+    registerApp: (appData: AppRegistrationInput) => Promise<RegisteredApp>;
     normalizeAppId: (id: string) => string;
-    updateApp: (id: string, updates: AppUpdateInput) => RegisteredApp;
-    /** A route no other app answers to (as its slug or its id). */
-    private assertSlugFree;
+    updateApp: (id: string, updates: AppUpdateInput) => Promise<RegisteredApp>;
     findAppByRoute: (key: string) => RegisteredApp | undefined;
     appPath: (appId: string, subPath?: string) => string;
-    deleteApp: (id: string) => boolean;
+    deleteApp: (id: string) => Promise<boolean>;
+    /**
+     * Apps this browser registered before the registry moved to the server (localStorage
+     * `erp_registered_apps`): sent once to `apps.registry.import` (admin), then the key is kept as
+     * `<key>.imported`; and the apps the Shell config declares. Remote apps only — package apps were the
+     * server's already.
+     */
+    importLocalApps: () => Promise<{
+        imported: string[];
+        skipped: string[];
+    }>;
     pingApp: (targetUrl: string) => Promise<PingResult>;
     isModuleInstalled: (id: string) => boolean;
     markModuleInstalled: (id: string) => void;
