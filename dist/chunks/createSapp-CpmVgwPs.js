@@ -1,15 +1,15 @@
 import * as Z from "vue";
-import { reactive as h, inject as ee, provide as te, h as z, defineComponent as G, onUnmounted as re, onMounted as se, triggerRef as ne, shallowRef as oe, defineAsyncComponent as M, markRaw as E, nextTick as ie, watchEffect as ae, watch as V, computed as ce, ref as le, createApp as ue } from "vue";
+import { reactive as m, inject as ee, provide as te, h as z, defineComponent as G, onUnmounted as re, onMounted as se, triggerRef as ne, shallowRef as oe, defineAsyncComponent as M, markRaw as E, nextTick as ie, watchEffect as ae, watch as V, computed as ce, ref as le, createApp as ue } from "vue";
 import * as pe from "pinia";
 import { createPinia as de } from "pinia";
 import * as ge from "vue-router";
 import { RouterView as fe, createRouter as he, createWebHistory as me } from "vue-router";
 import * as ye from "@vueuse/core";
 import { useLocalStorage as W } from "@vueuse/core";
-import { S as b, R, A as ve, a as U, f as K, b as we, c as D, E as w, M as H } from "./format-BUIIBrkU.js";
-import N from "axios";
-function Se() {
-  const o = h({
+import { S as b, R, A as ve, a as U, f as K, b as Se, c as D, E as w, M as H } from "./format-BUIIBrkU.js";
+import L from "axios";
+function we() {
+  const o = m({
     user: null,
     realmRoles: [],
     clientRoles: {},
@@ -19,7 +19,7 @@ function Se() {
     return [.../* @__PURE__ */ new Set([...o.realmRoles, ...Object.values(o.clientRoles).flat()])];
   }
   const t = (s) => s.toLowerCase(), r = () => new Set(e().map(t));
-  return h({
+  return m({
     get user() {
       return o.user;
     },
@@ -96,12 +96,12 @@ class $e {
   modules = /* @__PURE__ */ new Map();
   components = /* @__PURE__ */ new Map();
   // 🛰️ ESA v5: Reactive Registries
-  _protocols = h(/* @__PURE__ */ new Map());
-  _modules = h(/* @__PURE__ */ new Map());
+  _protocols = m(/* @__PURE__ */ new Map());
+  _modules = m(/* @__PURE__ */ new Map());
   // 🧠 ESA v5: Event Bus (Central Nervous System)
   _eventHandlers = /* @__PURE__ */ new Map();
   // ⚡ Reactive state for UI elements (Navigation, Command Palette)
-  state = h({
+  state = m({
     isInitializing: !0,
     skills: [],
     commands: [],
@@ -128,7 +128,7 @@ class $e {
   $dialog = null;
   $api = null;
   $appState = null;
-  $authState = Se();
+  $authState = we();
   $f;
   /** The public environment over `state.environment` (contracts/env.ts). */
   $env = Ae(() => this.state.environment);
@@ -209,7 +209,7 @@ class $e {
    */
   $vue = {
     ref: le,
-    reactive: h,
+    reactive: m,
     computed: ce,
     watch: V,
     watchEffect: ae,
@@ -227,7 +227,7 @@ class $e {
     useLocalStorage: W
   };
   init = (e) => {
-    console.log("🚀 [sys-kernel] SuperApp Platform Kernel Initializing..."), this.$app = e.app, this.$router = e.router, this.$api = e.api, this.$config = e.config ? h({ ...e.config }) : null, this.$theme = e.theme, this.$message = e.message, this.$dialog = e.dialog, this.state.isInitializing = !1, this.syncManifestWithRegisteredApps();
+    console.log("🚀 [sys-kernel] SuperApp Platform Kernel Initializing..."), this.$app = e.app, this.$router = e.router, this.$api = e.api, this.$config = e.config ? m({ ...e.config }) : null, this.$theme = e.theme, this.$message = e.message, this.$dialog = e.dialog, this.state.isInitializing = !1, this.syncManifestWithRegisteredApps();
   };
   // --- 🌐 DYNAMIC APPLICATION REGISTRY ---
   formatAppEntryUrl = (e) => {
@@ -575,7 +575,7 @@ class $e {
    * 🧠 MODULE STATE MANAGEMENT
    * Retrieves or initializes a reactive state container for a specific module.
    */
-  getModuleState = (e, t = {}) => (this.state.moduleStates[e] || (this.state.moduleStates[e] = h(t)), this.state.moduleStates[e]);
+  getModuleState = (e, t = {}) => (this.state.moduleStates[e] || (this.state.moduleStates[e] = m(t)), this.state.moduleStates[e]);
   /**
    * 🗺️ [sys-kernel] MFE Entry Registration
    */
@@ -600,8 +600,8 @@ class $e {
     let r;
     return typeof t == "function" ? r = E(M(t)) : r = E(t), this.componentCache.set(e, r), r;
   };
-  skills = h([]);
-  commands = h([]);
+  skills = m([]);
+  commands = m([]);
   // --- ⚡ SKILLS & COMMANDS REGISTRY ---
   registerSkill = (e) => {
     this.skills.find((t) => t.id === e.id) || (this.skills.push(e), console.log(`✨ [sys-kernel] Skill registered: ${e.id}`));
@@ -820,14 +820,14 @@ class Ce {
   }
 }
 const Te = new Ce(), Me = () => {
-  const o = W(we, {
+  const o = W(Se, {
     current_app: "workspace",
     current_workspace: null
   });
   return (typeof o.value != "object" || o.value === null) && (console.warn("⚠️ [AppState] Invalid storage detected, resetting to defaults."), o.value = {
     current_app: "workspace",
     current_workspace: null
-  }), h({
+  }), m({
     get current_app() {
       return o.value.current_app;
     },
@@ -843,8 +843,8 @@ const Te = new Ce(), Me = () => {
     // 🏢 Global Workspace Cache (Populated from Discovery)
     workspaces: []
   });
-}, Ue = 3e4, L = "x-request-id";
-function Ie() {
+}, Ue = 3e4, O = "x-request-id";
+function Le() {
   if (typeof crypto.randomUUID == "function")
     return crypto.randomUUID();
   const o = crypto.getRandomValues(new Uint8Array(16));
@@ -852,7 +852,7 @@ function Ie() {
   const e = Array.from(o, (t) => t.toString(16).padStart(2, "0")).join("");
   return `${e.slice(0, 8)}-${e.slice(8, 12)}-${e.slice(12, 16)}-${e.slice(16, 20)}-${e.slice(20)}`;
 }
-function Le(o) {
+function Ie(o) {
   const e = o.response?.data, t = e && typeof e == "object" ? e.message || e.error_description || (typeof e.error == "string" ? e.error : void 0) : void 0;
   return {
     status: o.response?.status ?? null,
@@ -861,40 +861,46 @@ function Le(o) {
     data: e,
     url: o.config?.url,
     method: o.config?.method?.toUpperCase(),
-    requestId: o.config?.headers?.get?.(L)?.toString(),
+    requestId: o.config?.headers?.get?.(O)?.toString(),
     cause: o
   };
 }
 function Oe(o) {
   return function(t) {
-    const { baseURL: r, headers: s, withToken: n = !0, workspace: i = !1, onError: a, setup: c, ...p } = t;
+    const { baseURL: r, headers: s, withToken: n = !0, workspace: i = !1, onError: a, onSuccess: c, setup: u, ...l } = t;
     if (!r)
-      throw new Error("[createApi] `baseURL` is required — read it from env (e.g. import.meta.env.VITE_API_URL).");
-    const l = N.create({
+      throw new Error("[createApi] `baseURL` is required — read it from env (e.g. import.meta.env.VITE_API_URL) or pass a function.");
+    const p = L.create({
       timeout: Ue,
-      ...p,
-      baseURL: r,
+      ...l,
+      baseURL: typeof r == "string" ? r : void 0,
       headers: { Accept: "application/json", ...s }
     });
-    return l.interceptors.request.use((u) => {
-      if (u.headers.has(L) || u.headers.set(L, Ie()), n) {
-        const d = localStorage.getItem(o.tokenKey);
-        d && !u.headers.has("Authorization") && u.headers.set("Authorization", `Bearer ${d}`);
+    return p.interceptors.request.use((d) => {
+      if (typeof r == "function" && !d.baseURL) {
+        const g = r();
+        if (!g)
+          throw new L.AxiosError("No API base URL is configured for this client.", "BASE_URL_MISSING", d);
+        d.baseURL = g;
+      }
+      if (d.headers.has(O) || d.headers.set(O, Le()), n) {
+        const g = localStorage.getItem(o.tokenKey);
+        g && !d.headers.has("Authorization") && d.headers.set("Authorization", `Bearer ${g}`);
       }
       if (i) {
-        const d = o.appState?.()?.current_workspace;
-        d && u.headers.set("x-workspace-id", String(d));
+        const g = o.appState?.()?.current_workspace;
+        g && d.headers.set("x-workspace-id", String(g));
       }
-      return u;
-    }), l.interceptors.response.use(
-      (u) => u,
-      (u) => {
-        if (N.isCancel(u))
-          return Promise.reject(u);
-        const d = Le(u);
-        return a ? a(d) : o.message?.error(d.message), Promise.reject(d);
+      return d;
+    }), p.interceptors.response.use(
+      (d) => c ? c(d) : d,
+      (d) => {
+        if (L.isCancel(d))
+          return Promise.reject(d);
+        const g = Ie(d);
+        return a ? a(g) : o.message?.error(g.message), Promise.reject(g);
       }
-    ), c?.(l), l;
+    ), u?.(p), p;
   };
 }
 const Be = {
@@ -1016,7 +1022,7 @@ const Be = {
     s && typeof s == "object" ? Y(s, n, t) : t[n] = String(s);
   }
   return t;
-}, De = (o, e) => e ? o.replace(/\{(\w+)\}/g, (t, r) => e[r] === void 0 || e[r] === null ? t : String(e[r])) : o, Ne = (o, e) => {
+}, Ne = (o, e) => e ? o.replace(/\{(\w+)\}/g, (t, r) => e[r] === void 0 || e[r] === null ? t : String(e[r])) : o, De = (o, e) => {
   if (e?.count === void 0 || e.count === null || !o.includes("|")) return o;
   const t = Number(e.count);
   if (!Number.isFinite(t)) return o;
@@ -1030,58 +1036,58 @@ function je(o = {}) {
     } catch {
       return null;
     }
-  })() : null, s = h({ locale: r || o.locale || e, messages: {} }), n = /* @__PURE__ */ new Set(), i = (l, u, d) => {
-    const k = Y(u, d || "");
-    s.messages[l] = { ...s.messages[l] ?? {}, ...k };
-  }, a = (l, u) => {
-    for (const [d, k] of Object.entries(l)) i(d, k, u);
+  })() : null, s = m({ locale: r || o.locale || e, messages: {} }), n = /* @__PURE__ */ new Set(), i = (l, p, d) => {
+    const g = Y(p, d || "");
+    s.messages[l] = { ...s.messages[l] ?? {}, ...g };
+  }, a = (l, p) => {
+    for (const [d, g] of Object.entries(l)) i(d, g, p);
   };
   a(Be), o.messages && a(o.messages);
-  const c = (l, u) => s.messages[u]?.[l], p = {
+  const c = (l, p) => s.messages[p]?.[l], u = {
     get locale() {
       return s.locale;
     },
     set locale(l) {
-      p.setLocale(l);
+      u.setLocale(l);
     },
     fallbackLocale: e,
     get availableLocales() {
       return Object.keys(s.messages);
     },
-    t(l, u) {
-      const d = c(l, s.locale) ?? c(l, e) ?? u?.default ?? l;
-      return De(Ne(d, u), u);
+    t(l, p) {
+      const d = c(l, s.locale) ?? c(l, e) ?? p?.default ?? l;
+      return Ne(De(d, p), p);
     },
-    te(l, u) {
-      return c(l, u ?? s.locale) !== void 0 || !u && c(l, e) !== void 0;
+    te(l, p) {
+      return c(l, p ?? s.locale) !== void 0 || !p && c(l, e) !== void 0;
     },
     setLocale(l) {
       if (!l || l === s.locale) return;
-      const u = s.locale;
+      const p = s.locale;
       if (s.locale = l, t)
         try {
           localStorage.setItem(D, l);
         } catch {
         }
-      document.documentElement.setAttribute("lang", l), n.forEach((d) => d(l, u));
+      document.documentElement.setAttribute("lang", l), n.forEach((d) => d(l, p));
     },
     addMessages: a,
     addLocaleMessages: i,
-    getMessages(l = s.locale, u = !0) {
-      return u ? { ...s.messages[e] ?? {}, ...s.messages[l] ?? {} } : { ...s.messages[l] ?? {} };
+    getMessages(l = s.locale, p = !0) {
+      return p ? { ...s.messages[e] ?? {}, ...s.messages[l] ?? {} } : { ...s.messages[l] ?? {} };
     },
     onLocaleChange(l) {
       return n.add(l), () => n.delete(l);
     }
   };
   return typeof document < "u" && document.documentElement.setAttribute("lang", s.locale), V(() => s.locale, () => {
-  }), p;
+  }), u;
 }
-function S(o) {
+function A(o) {
   return o === "vi" ? "vi-VN" : o === "en" ? "en-US" : o;
 }
 const j = /* @__PURE__ */ new Map();
-function A(o, e) {
+function k(o, e) {
   const t = j.get(o);
   if (t)
     return t;
@@ -1136,8 +1142,8 @@ function J(o, e = {}) {
     formatMoney(i, a) {
       if (i == null || !Number.isFinite(i))
         return w;
-      const c = a ?? r, p = S(n.locale);
-      return A(`money:${p}:${c}`, () => new Intl.NumberFormat(p, {
+      const c = a ?? r, u = A(n.locale);
+      return k(`money:${u}:${c}`, () => new Intl.NumberFormat(u, {
         style: "currency",
         currency: c,
         maximumFractionDigits: 0
@@ -1146,16 +1152,16 @@ function J(o, e = {}) {
     formatNumber(i, a = 0) {
       if (i == null || !Number.isFinite(i))
         return w;
-      const c = S(n.locale);
-      return A(`number:${c}:${a}`, () => new Intl.NumberFormat(c, {
+      const c = A(n.locale);
+      return k(`number:${c}:${a}`, () => new Intl.NumberFormat(c, {
         maximumFractionDigits: a
       })).format(i);
     },
     formatPercent(i, a = 1) {
       if (i == null || !Number.isFinite(i))
         return w;
-      const c = S(n.locale);
-      return A(`percent:${c}:${a}`, () => new Intl.NumberFormat(c, {
+      const c = A(n.locale);
+      return k(`percent:${c}:${a}`, () => new Intl.NumberFormat(c, {
         style: "percent",
         maximumFractionDigits: a
       })).format(i);
@@ -1164,8 +1170,8 @@ function J(o, e = {}) {
       const a = _(i);
       if (!a)
         return w;
-      const c = S(n.locale);
-      return A(`date:${c}`, () => new Intl.DateTimeFormat(c, {
+      const c = A(n.locale);
+      return k(`date:${c}`, () => new Intl.DateTimeFormat(c, {
         day: "2-digit",
         month: "short",
         year: "numeric"
@@ -1175,8 +1181,8 @@ function J(o, e = {}) {
       const a = _(i);
       if (!a)
         return w;
-      const c = S(n.locale);
-      return A(`datetime:${c}`, () => new Intl.DateTimeFormat(c, {
+      const c = A(n.locale);
+      return k(`datetime:${c}`, () => new Intl.DateTimeFormat(c, {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -1188,8 +1194,8 @@ function J(o, e = {}) {
       const a = _(i);
       if (!a)
         return w;
-      const c = S(n.locale);
-      return A(`time:${c}`, () => new Intl.DateTimeFormat(c, {
+      const c = A(n.locale);
+      return k(`time:${c}`, () => new Intl.DateTimeFormat(c, {
         hour: "2-digit",
         minute: "2-digit"
       })).format(a);
@@ -1198,22 +1204,22 @@ function J(o, e = {}) {
       const a = _(i);
       if (!a)
         return w;
-      const c = S(n.locale), p = A(`relative:${c}`, () => new Intl.RelativeTimeFormat(c, {
+      const c = A(n.locale), u = k(`relative:${c}`, () => new Intl.RelativeTimeFormat(c, {
         numeric: "auto"
       })), l = a.getTime() - Date.now();
-      for (const u of Fe)
-        if (Math.abs(l) >= u.ms)
-          return p.format(Math.round(l / u.ms), u.unit);
-      return p.format(0, "second");
+      for (const p of Fe)
+        if (Math.abs(l) >= p.ms)
+          return u.format(Math.round(l / p.ms), p.unit);
+      return u.format(0, "second");
     },
     formatBytes(i, a = 1) {
       if (i == null || !Number.isFinite(i))
         return w;
-      let c = Math.abs(i), p = 0;
-      for (; c >= 1024 && p < F.length - 1; )
-        c = c / 1024, p = p + 1;
-      const l = i < 0 ? "-" : "", u = p === 0 ? 0 : a;
-      return `${l}${n.formatNumber(c, u)} ${F[p]}`;
+      let c = Math.abs(i), u = 0;
+      for (; c >= 1024 && u < F.length - 1; )
+        c = c / 1024, u = u + 1;
+      const l = i < 0 ? "-" : "", p = u === 0 ? 0 : a;
+      return `${l}${n.formatNumber(c, p)} ${F[u]}`;
     },
     withLocale(i) {
       return J(() => i, { fallbackLocale: t, currency: r, registry: s });
@@ -1222,17 +1228,17 @@ function J(o, e = {}) {
       if (!i)
         throw new Error("[format] register() needs a namespace — use the module id.");
       const c = s.groups.get(i) ?? {};
-      for (const [p, l] of Object.entries(a)) {
-        if (xe.has(p))
-          throw new Error(`[format] "${p}" is a built-in formatter and cannot be replaced.`);
-        c[p] = l;
-        const u = s.owners.get(p);
-        if (!u) {
-          s.owners.set(p, i);
+      for (const [u, l] of Object.entries(a)) {
+        if (xe.has(u))
+          throw new Error(`[format] "${u}" is a built-in formatter and cannot be replaced.`);
+        c[u] = l;
+        const p = s.owners.get(u);
+        if (!p) {
+          s.owners.set(u, i);
           continue;
         }
-        u !== i && console.warn(
-          `⚠️ [format] "${p}" is already registered by [${u}], so $f.${p} stays theirs. [${i}] can reach its own as $f.of('${i}').${p}.`
+        p !== i && console.warn(
+          `⚠️ [format] "${u}" is already registered by [${p}], so $f.${u} stays theirs. [${i}] can reach its own as $f.of('${i}').${u}.`
         );
       }
       return s.groups.set(i, c), c;
@@ -1248,9 +1254,9 @@ function J(o, e = {}) {
     get(i, a, c) {
       if (typeof a != "string" || a in i)
         return Reflect.get(i, a, c);
-      const p = s.owners.get(a);
-      if (p)
-        return s.groups.get(p)?.[a];
+      const u = s.owners.get(a);
+      if (u)
+        return s.groups.get(u)?.[a];
     },
     has(i, a) {
       return a in i ? !0 : typeof a == "string" && s.owners.has(a);
@@ -1294,18 +1300,18 @@ async function rt(o) {
   console.log("💉 [sapp] apiBase:", s);
   const n = new $e();
   n.discoveryService = r, n.$app = e, window.$superApp = n;
-  const i = o.theme.register(e, n), a = i.uiStore, c = je(o.i18n), p = ze(c, { currency: o.currency });
-  n.registerProtocol("i18n", c), c.onLocaleChange((f, y) => n.emit("i18n:locale-changed", { locale: f, previous: y }));
-  const l = new Ee(s), u = new be(o.socket?.url ?? He());
-  u.connect(), n.registerProtocol("api", l), n.registerProtocol("socket", u), l.bind(n);
+  const i = o.theme.register(e, n), a = i.uiStore, c = je(o.i18n), u = ze(c, { currency: o.currency });
+  n.registerProtocol("i18n", c), c.onLocaleChange((h, v) => n.emit("i18n:locale-changed", { locale: h, previous: v }));
+  const l = new Ee(s), p = new be(o.socket?.url ?? He());
+  p.connect(), n.registerProtocol("api", l), n.registerProtocol("socket", p), l.bind(n);
   const d = o.auth?.tokenKey ?? "accessToken";
   n.createApi = Oe({
     tokenKey: d,
     message: i.messageService,
     appState: () => n.$appState
   });
-  const k = o.auth?.loginPath ?? "/login", Q = o.layout ?? G({ name: "SappLayout", setup: () => () => z(fe) }), X = [
-    { path: k, name: "Login", component: q(n, o.auth?.loginComponentId ?? "auth.login"), meta: { public: !0 } },
+  const g = o.auth?.loginPath ?? "/login", Q = o.layout ?? G({ name: "SappLayout", setup: () => () => z(fe) }), X = [
+    { path: g, name: "Login", component: q(n, o.auth?.loginComponentId ?? "auth.login"), meta: { public: !0 } },
     {
       path: "/",
       name: x,
@@ -1316,12 +1322,12 @@ async function rt(o) {
     },
     ...o.routes ?? []
   ], $ = he({ history: me(o.router?.base), routes: X });
-  $.beforeEach((f, y, g) => {
-    const v = localStorage.getItem(d);
-    if (!f.meta.public && !v) return g(k);
-    g();
+  $.beforeEach((h, v, f) => {
+    const S = localStorage.getItem(d);
+    if (!h.meta.public && !S) return f(g);
+    f();
   });
-  const P = { app: e, router: $, pinia: t, superApp: n, discovery: r, api: l, socket: u };
+  const P = { app: e, router: $, pinia: t, superApp: n, discovery: r, api: l, socket: p };
   if (await o.modules?.(P), n.state.discovery = r.getAll(), n.init({
     app: e,
     router: $,
@@ -1330,37 +1336,37 @@ async function rt(o) {
     message: i.messageService,
     dialog: i.dialogService
   }), o.branding) {
-    const { name: f, icon: y, logo: g } = o.branding;
-    f && (document.title = f);
-    const v = y || g;
-    if (v) {
+    const { name: h, icon: v, logo: f } = o.branding;
+    h && (document.title = h);
+    const S = v || f;
+    if (S) {
       const T = document.querySelector('link[rel~="icon"]') ?? Object.assign(document.createElement("link"), { rel: "icon" });
-      T.href = v, T.parentNode || document.head.appendChild(T);
+      T.href = S, T.parentNode || document.head.appendChild(T);
     }
   }
-  const O = n.applyDiscovery();
-  O.platform || await n.loadPlatformConfig(), O.apps || await n.loadServerApps();
-  const C = i.appState ?? Me(), B = r.get("system.workspaces");
-  B && (C.workspaces = B), n.$appState = C, e.config.globalProperties.$appState = C, e.config.globalProperties.$auth = n.$authState, e.provide("$auth", n.$authState);
-  for (const f of o.features ?? []) {
-    const y = {
+  const B = n.applyDiscovery();
+  B.platform || await n.loadPlatformConfig(), B.apps || await n.loadServerApps();
+  const C = i.appState ?? Me(), N = r.get("system.workspaces");
+  N && (C.workspaces = N), n.$appState = C, e.config.globalProperties.$appState = C, e.config.globalProperties.$auth = n.$authState, e.provide("$auth", n.$authState);
+  for (const h of o.features ?? []) {
+    const v = {
       ...P,
-      featureId: f.id,
-      registerRoute: (g) => $.addRoute(x, g),
-      registerTopRoute: (g) => $.addRoute(g),
-      registerComponent: (g) => n.registerComponent(g),
-      registerSkill: (g) => n.registerSkill(g),
-      registerCommand: (g) => n.registerCommand(g),
-      registerMessages: (g, v) => c.addMessages(g, v),
-      provide: (g, v) => e.provide(g, v)
+      featureId: h.id,
+      registerRoute: (f) => $.addRoute(x, f),
+      registerTopRoute: (f) => $.addRoute(f),
+      registerComponent: (f) => n.registerComponent(f),
+      registerSkill: (f) => n.registerSkill(f),
+      registerCommand: (f) => n.registerCommand(f),
+      registerMessages: (f, S) => c.addMessages(f, S),
+      provide: (f, S) => e.provide(f, S)
     };
-    await f.install(y), console.log(`🧩 [sapp] Shell feature installed: ${f.id}`);
+    await h.install(v), console.log(`🧩 [sapp] Shell feature installed: ${h.id}`);
   }
-  const m = e.config.globalProperties;
-  return m.$c = (f) => n.getComponent(f), m.$s = n, m.$superApp = n, m.$message = i.messageService, m.$dialog = i.dialogService, m.$i18n = c, m.$t = (f, y) => c.t(f, y), m.$f = p, n.$f = p, m.$env = n.$env, e.provide("$env", n.$env), e.provide("$i18n", c), e.provide("$f", p), e.provide("ui-store", a), e.provide("$theme", o.tokens), e.provide("$superApp", n), e.provide("$s", n), e.provide("$message", i.messageService), e.provide("$dialog", i.dialogService), {
+  const y = e.config.globalProperties;
+  return y.$c = (h) => n.getComponent(h), y.$s = n, y.$superApp = n, y.$message = i.messageService, y.$dialog = i.dialogService, y.$i18n = c, y.$t = (h, v) => c.t(h, v), y.$f = u, n.$f = u, y.$env = n.$env, e.provide("$env", n.$env), e.provide("$i18n", c), e.provide("$f", u), e.provide("ui-store", a), e.provide("$theme", o.tokens), e.provide("$superApp", n), e.provide("$s", n), e.provide("$message", i.messageService), e.provide("$dialog", i.dialogService), {
     ...P,
-    mount(f = "#app") {
-      return e.use($), e.mount(f), e;
+    mount(h = "#app") {
+      return e.use($), e.mount(h), e;
     }
   };
 }
@@ -1373,7 +1379,7 @@ export {
   Oe as b,
   rt as c,
   Me as d,
-  Se as e,
+  we as e,
   J as f,
   ze as g,
   je as h,
@@ -1381,4 +1387,4 @@ export {
   tt as j,
   Ge as k
 };
-//# sourceMappingURL=createSapp-CVm1qpIU.js.map
+//# sourceMappingURL=createSapp-CpmVgwPs.js.map

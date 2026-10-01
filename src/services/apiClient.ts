@@ -50,20 +50,28 @@ function toApiClientError(error: AxiosError): ApiClientError {
  */
 export function createApiFactory(deps: ApiFactoryDeps): CreateApi {
   return function createApi(options: CreateApiOptions): AxiosInstance {
-    const { baseURL, headers, withToken = true, workspace = false, onError, setup, ...axiosConfig } = options;
+    const { baseURL, headers, withToken = true, workspace = false, onError, onSuccess, setup, ...axiosConfig } = options;
 
     if (!baseURL) {
-      throw new Error('[createApi] `baseURL` is required — read it from env (e.g. import.meta.env.VITE_API_URL).');
+      throw new Error('[createApi] `baseURL` is required — read it from env (e.g. import.meta.env.VITE_API_URL) or pass a function.');
     }
 
     const instance = axios.create({
       timeout: DEFAULT_TIMEOUT_MS,
       ...axiosConfig,
-      baseURL,
+      baseURL: typeof baseURL === 'string' ? baseURL : undefined,
       headers: { Accept: 'application/json', ...headers },
     });
 
     instance.interceptors.request.use((config) => {
+      // A function base is read per request (e.g. a public environment value an admin can change).
+      if (typeof baseURL === 'function' && !config.baseURL) {
+        const resolved = baseURL();
+        if (!resolved) {
+          throw new axios.AxiosError('No API base URL is configured for this client.', 'BASE_URL_MISSING', config);
+        }
+        config.baseURL = resolved;
+      }
       // Every request is traceable end to end: keep the caller's id, otherwise mint one.
       if (!config.headers.has(REQUEST_ID_HEADER)) {
         config.headers.set(REQUEST_ID_HEADER, newRequestId());
@@ -84,7 +92,7 @@ export function createApiFactory(deps: ApiFactoryDeps): CreateApi {
     });
 
     instance.interceptors.response.use(
-      response => response,
+      response => (onSuccess ? onSuccess(response) : response),
       (error: AxiosError) => {
         if (axios.isCancel(error)) {
           return Promise.reject(error);

@@ -7,7 +7,10 @@
  *
  *   const http = superApp.createApi({
  *     baseURL: import.meta.env.VITE_API_URL,        // the app's OWN backend — never the Shell's
+ *     // or, read per request (a public environment value):
+ *     // baseURL: () => superApp.$env.get('BIZ_API_SERVER'),
  *     headers: { 'x-app': 'demo-app' },
+ *     onSuccess: (response) => response,            // optional: look at / reshape every answer
  *     onError: (error) => { if (error.status !== 404) message.error(error.message); },
  *   });
  *   const { data } = await http.get('/products', { params: { page: 1 } });
@@ -21,7 +24,7 @@
  *
  * axios is provided by the Shell (peer dependency) — a mini app does not install or bundle it.
  */
-import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 /** The one error shape every client rejects with. */
 export interface ApiClientError {
     /** HTTP status; `null` for a network error or a timeout. */
@@ -40,8 +43,12 @@ export interface ApiClientError {
     cause: unknown;
 }
 export interface CreateApiOptions extends Omit<AxiosRequestConfig, 'baseURL' | 'headers'> {
-    /** The app's own backend, from env (`import.meta.env.VITE_API_URL`) — never a literal. */
-    baseURL: string;
+    /**
+     * The app's own backend — never a literal: from env (`import.meta.env.VITE_API_URL`), or a function
+     * read on every request (`() => superApp.$env.get('BIZ_API_SERVER')`). A function that returns
+     * nothing rejects the request (code `BASE_URL_MISSING`) before anything is sent.
+     */
+    baseURL: string | (() => string | null | undefined);
     /** Merged over the defaults; a key here wins. */
     headers?: Record<string, string>;
     /** Send the signed-in user's bearer token. Default `true`. (Not `auth`: that is axios' basic-auth option.) */
@@ -53,6 +60,8 @@ export interface CreateApiOptions extends Omit<AxiosRequestConfig, 'baseURL' | '
      * not for a cancelled one. The request promise still rejects with the same error.
      */
     onError?: (error: ApiClientError) => void;
+    /** Every successful response passes through it (inspect or reshape); what it returns is what callers get. */
+    onSuccess?: (response: AxiosResponse) => AxiosResponse | Promise<AxiosResponse>;
     /** Last word on the instance: add interceptors after the Shell's defaults are in place. */
     setup?: (instance: AxiosInstance) => void;
 }
