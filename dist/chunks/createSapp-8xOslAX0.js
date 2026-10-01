@@ -1,5 +1,5 @@
 import * as Z from "vue";
-import { reactive as h, inject as ee, provide as te, h as q, defineComponent as V, onUnmounted as re, onMounted as se, triggerRef as ne, shallowRef as oe, defineAsyncComponent as M, markRaw as b, nextTick as ie, watchEffect as ae, watch as G, computed as ce, ref as le, createApp as ue } from "vue";
+import { reactive as h, inject as ee, provide as te, h as q, defineComponent as G, onUnmounted as re, onMounted as se, triggerRef as ne, shallowRef as oe, defineAsyncComponent as M, markRaw as b, nextTick as ie, watchEffect as ae, watch as V, computed as ce, ref as le, createApp as ue } from "vue";
 import * as de from "pinia";
 import { createPinia as ge } from "pinia";
 import * as pe from "vue-router";
@@ -179,7 +179,7 @@ class ke {
     ref: le,
     reactive: h,
     computed: ce,
-    watch: G,
+    watch: V,
     watchEffect: ae,
     nextTick: ie,
     markRaw: b,
@@ -188,7 +188,7 @@ class ke {
     triggerRef: ne,
     onMounted: se,
     onUnmounted: re,
-    defineComponent: V,
+    defineComponent: G,
     h: q,
     provide: te,
     inject: ee,
@@ -827,7 +827,7 @@ const Ie = {
       of: "of",
       prev: "Previous"
     },
-    shell: { home: "Home", apps: "Apps", all: "All", favorites: "Favorites", favoritesEmpty: "No favorites yet — press the star on an app.", toggleFavorite: "Toggle favorite", searchApps: "Search apps…", settings: "Settings", theme: "Appearance", language: "Language", logout: "Sign out", profile: "Profile" },
+    shell: { home: "Home", apps: "Apps", all: "All", favorites: "Favorites", favoritesEmpty: "No favorites yet — press the star on an app.", recent: "Recent", toggleFavorite: "Toggle favorite", searchApps: "Search apps…", settings: "Settings", theme: "Appearance", language: "Language", logout: "Sign out", profile: "Profile" },
     theme: {
       mode: "Mode",
       light: "Light",
@@ -882,7 +882,7 @@ const Ie = {
       of: "trên",
       prev: "Trước"
     },
-    shell: { home: "Trang chủ", apps: "Ứng dụng", all: "Tất cả", favorites: "Yêu thích", favoritesEmpty: "Chưa có mục yêu thích — bấm ngôi sao trên ứng dụng.", toggleFavorite: "Yêu thích", searchApps: "Tìm ứng dụng…", settings: "Cài đặt", theme: "Giao diện", language: "Ngôn ngữ", logout: "Đăng xuất", profile: "Hồ sơ" },
+    shell: { home: "Trang chủ", apps: "Ứng dụng", all: "Tất cả", favorites: "Yêu thích", favoritesEmpty: "Chưa có mục yêu thích — bấm ngôi sao trên ứng dụng.", recent: "Gần đây", toggleFavorite: "Yêu thích", searchApps: "Tìm ứng dụng…", settings: "Cài đặt", theme: "Giao diện", language: "Ngôn ngữ", logout: "Đăng xuất", profile: "Hồ sơ" },
     theme: {
       mode: "Chế độ",
       light: "Sáng",
@@ -975,7 +975,7 @@ function De(o = {}) {
       return i.add(u), () => i.delete(u);
     }
   };
-  return typeof document < "u" && document.documentElement.setAttribute("lang", s.locale), G(() => s.locale, () => {
+  return typeof document < "u" && document.documentElement.setAttribute("lang", s.locale), V(() => s.locale, () => {
   }), l;
 }
 function A(o) {
@@ -1177,7 +1177,7 @@ function xe(o) {
 function Qe() {
   return globalThis[K];
 }
-const Fe = {}, F = "Root", We = Fe ?? {}, qe = (o) => o || We.VITE_MASTER_API_URL || (window.location.hostname === "localhost" ? "http://localhost:4400" : ""), Ve = () => {
+const Fe = {}, F = "Root", We = Fe ?? {}, qe = (o) => o || We.VITE_MASTER_API_URL || (window.location.hostname === "localhost" ? "http://localhost:4400" : ""), Ge = () => {
   const o = window.location.protocol === "https:" ? "wss:" : "ws:", e = window.location.host.replace(":4401", ":4400");
   return `${o}//${e}/socket`;
 }, W = (o, e) => async () => {
@@ -1197,7 +1197,7 @@ async function Xe(o) {
   i.$app = e, window.$superApp = i;
   const n = o.theme.register(e, i), a = n.uiStore, c = De(o.i18n), l = je(c, { currency: o.currency });
   i.registerProtocol("i18n", c), c.onLocaleChange((f, y) => i.emit("i18n:locale-changed", { locale: f, previous: y }));
-  const u = new $e(s), d = new Ee(o.socket?.url ?? Ve());
+  const u = new $e(s), d = new Ee(o.socket?.url ?? Ge());
   d.connect(), i.registerProtocol("api", u), i.registerProtocol("socket", d), u.bind(i);
   const g = o.auth?.tokenKey ?? "accessToken";
   i.createApi = Me({
@@ -1205,7 +1205,7 @@ async function Xe(o) {
     message: n.messageService,
     appState: () => i.$appState
   });
-  const E = o.auth?.loginPath ?? "/login", Q = o.layout ?? V({ name: "SappLayout", setup: () => () => q(fe) }), X = [
+  const E = o.auth?.loginPath ?? "/login", Q = o.layout ?? G({ name: "SappLayout", setup: () => () => q(fe) }), X = [
     { path: E, name: "Login", component: W(i, o.auth?.loginComponentId ?? "auth.login"), meta: { public: !0 } },
     {
       path: "/",
@@ -1280,4 +1280,4 @@ export {
   Qe as j,
   xe as k
 };
-//# sourceMappingURL=createSapp-FQomrWOU.js.map
+//# sourceMappingURL=createSapp-8xOslAX0.js.map

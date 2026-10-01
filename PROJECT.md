@@ -110,3 +110,4 @@ Kernel: `getApiBaseUrl()` (discovery `master_api_url`, else base của protocol 
 
 Mount một bundle dưới id khác (bundle `master-data` → registry `master-data-live`): `createMiniApp` chỉ nhận `mountId` (+ `aliases`), **không** nhận luôn id gốc của bundle — nên `/app/master-data` vẫn nạp từ nguồn riêng của nó. Component và namespace i18n vẫn theo id gốc của bundle (`master-data.*`): hai nguồn của cùng một bundle trong một phiên dùng chung namespace đó.
 
+`loadAppManifest(appId)` đọc `manifest.json` của nguồn hiện tại của một app (cache theo URL): app package → `<package files>/<package>/<version>/manifest.json` (có `version`, `publishedAt`, `publishedBy` do server ghi); app remote → `<remote root>/manifest.json` (dev server phục vụ file ở gốc app, không có `version`). Header của theme dùng nó để hiện version dưới tên app.
