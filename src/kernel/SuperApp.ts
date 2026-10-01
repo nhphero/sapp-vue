@@ -61,6 +61,7 @@ export class SuperApp implements ISuperApp {
     discovery: {} as Record<string, any>, // 🛰️ System discovery parameters
     serverApps: [] as RegisteredApp[], // 📦 Local apps served by the backend's package registry
     platformConfig: null as PlatformConfig | null, // ⚙️ Admin → Config
+    activeCssScope: '', // 🎨 CSS scope of the mini app on screen (mfeScopedCssPlugin)
   });
 
   private loadingPromises: Map<string, Promise<void>> = new Map();
@@ -713,6 +714,8 @@ export class SuperApp implements ISuperApp {
         // 🛰️ ESA PROTOCOL: Runtime ESM Lazy Loading (URL-based)
         const modulePackage = await import(/* @vite-ignore */ moduleUrl);
         const erpModule = modulePackage.default;
+        // The key its CSS is scoped to (mfeScopedCssPlugin): written into a build's entry, else its module id.
+        this.cssScopes.set(moduleId, String(modulePackage.__sappCssScope ?? erpModule?.id ?? moduleId));
 
         if (erpModule?.install) {
           // ESA Protocol: Unified Installation via Bridge (same door as in-process modules)
@@ -734,6 +737,10 @@ export class SuperApp implements ISuperApp {
     this.loadingPromises.set(moduleId, loadPromise);
     return loadPromise;
   };
+
+  private cssScopes = new Map<string, string>();
+
+  public getModuleCssScope = (moduleId: string): string => this.cssScopes.get(moduleId) ?? moduleId;
 
   private pathListeners: Map<string, PathChangeHandler[]> = new Map();
 

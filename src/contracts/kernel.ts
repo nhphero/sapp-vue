@@ -106,6 +106,8 @@ export interface KernelState {
   serverApps: RegisteredApp[];
   /** The platform config (Admin → Config), loaded by `loadPlatformConfig()`; null until it answers. */
   platformConfig: PlatformConfig | null;
+  /** CSS scope key of the mini app on screen (set by the Shell's app container); '' on Shell pages. */
+  activeCssScope: string;
 }
 
 /**
@@ -180,6 +182,12 @@ export interface ISuperApp extends ISuperAppCore {
    * does not answer leaves everything as it is (returns null).
    */
   loadPlatformConfig(): Promise<PlatformConfig | null>;
+  /**
+   * The key a mini app's CSS is scoped to (`mfeScopedCssPlugin`): the Shell marks the app's viewport
+   * `data-mfe="<key>"` and its teleported surfaces `data-portal="<key>"`, so one app's utilities never
+   * reach the Shell or another app. Its build's `__sappCssScope` export, else its module id.
+   */
+  getModuleCssScope(moduleId: string): string;
   /** A path on the package files host (`_assets/logo.png`) as a URL; URLs (http, data:, /…) unchanged. */
   resolvePackageFileUrl(pathOrUrl: string): string;
   /**

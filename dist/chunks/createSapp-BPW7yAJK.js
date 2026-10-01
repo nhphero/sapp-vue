@@ -1,15 +1,15 @@
 import * as Z from "vue";
-import { reactive as p, inject as ee, provide as te, h as q, defineComponent as z, onUnmounted as re, onMounted as se, triggerRef as ne, shallowRef as oe, defineAsyncComponent as U, markRaw as b, nextTick as ie, watchEffect as ae, watch as G, computed as ce, ref as le, createApp as ue } from "vue";
+import { reactive as h, inject as ee, provide as te, h as q, defineComponent as z, onUnmounted as re, onMounted as se, triggerRef as ne, shallowRef as oe, defineAsyncComponent as M, markRaw as b, nextTick as ie, watchEffect as ae, watch as G, computed as ce, ref as le, createApp as ue } from "vue";
 import * as de from "pinia";
 import { createPinia as ge } from "pinia";
 import * as fe from "vue-router";
-import { RouterView as he, createRouter as pe, createWebHistory as me } from "vue-router";
+import { RouterView as pe, createRouter as he, createWebHistory as me } from "vue-router";
 import * as ye from "@vueuse/core";
 import { useLocalStorage as H } from "@vueuse/core";
-import { S as $, R as P, H as O, A as Se, a as M, f as V, b as we, c as L, E as w, M as K } from "./format-BUIIBrkU.js";
+import { S as $, R as P, H as O, A as Se, a as U, f as V, b as we, c as L, E as w, M as K } from "./format-BUIIBrkU.js";
 import N from "axios";
 function ke() {
-  const i = p({
+  const i = h({
     user: null,
     realmRoles: [],
     clientRoles: {},
@@ -19,7 +19,7 @@ function ke() {
     return [.../* @__PURE__ */ new Set([...i.realmRoles, ...Object.values(i.clientRoles).flat()])];
   }
   const t = (s) => s.toLowerCase(), r = () => new Set(e().map(t));
-  return p({
+  return h({
     get user() {
       return i.user;
     },
@@ -72,12 +72,12 @@ class Ae {
   modules = /* @__PURE__ */ new Map();
   components = /* @__PURE__ */ new Map();
   // 🛰️ ESA v5: Reactive Registries
-  _protocols = p(/* @__PURE__ */ new Map());
-  _modules = p(/* @__PURE__ */ new Map());
+  _protocols = h(/* @__PURE__ */ new Map());
+  _modules = h(/* @__PURE__ */ new Map());
   // 🧠 ESA v5: Event Bus (Central Nervous System)
   _eventHandlers = /* @__PURE__ */ new Map();
   // ⚡ Reactive state for UI elements (Navigation, Command Palette)
-  state = p({
+  state = h({
     isInitializing: !0,
     skills: [],
     commands: [],
@@ -88,8 +88,10 @@ class Ae {
     // 🛰️ System discovery parameters
     serverApps: [],
     // 📦 Local apps served by the backend's package registry
-    platformConfig: null
+    platformConfig: null,
     // ⚙️ Admin → Config
+    activeCssScope: ""
+    // 🎨 CSS scope of the mini app on screen (mfeScopedCssPlugin)
   });
   loadingPromises = /* @__PURE__ */ new Map();
   $app = null;
@@ -179,13 +181,13 @@ class Ae {
    */
   $vue = {
     ref: le,
-    reactive: p,
+    reactive: h,
     computed: ce,
     watch: G,
     watchEffect: ae,
     nextTick: ie,
     markRaw: b,
-    defineAsyncComponent: U,
+    defineAsyncComponent: M,
     shallowRef: oe,
     triggerRef: ne,
     onMounted: se,
@@ -197,7 +199,7 @@ class Ae {
     useLocalStorage: H
   };
   init = (e) => {
-    console.log("🚀 [sys-kernel] SuperApp Platform Kernel Initializing..."), this.$app = e.app, this.$router = e.router, this.$api = e.api, this.$config = e.config ? p({ ...e.config }) : null, this.$theme = e.theme, this.$message = e.message, this.$dialog = e.dialog, this.state.isInitializing = !1, this.syncManifestWithRegisteredApps();
+    console.log("🚀 [sys-kernel] SuperApp Platform Kernel Initializing..."), this.$app = e.app, this.$router = e.router, this.$api = e.api, this.$config = e.config ? h({ ...e.config }) : null, this.$theme = e.theme, this.$message = e.message, this.$dialog = e.dialog, this.state.isInitializing = !1, this.syncManifestWithRegisteredApps();
   };
   // --- 🌐 DYNAMIC APPLICATION REGISTRY ---
   formatAppEntryUrl = (e) => {
@@ -506,11 +508,11 @@ class Ae {
       }
       try {
         console.log(`🔌 [sys-kernel] Connecting to remote module [${e}] at ${s}`);
-        const n = (await import(
+        const o = await import(
           /* @vite-ignore */
           s
-        )).default;
-        if (n?.install) {
+        ), n = o.default;
+        if (this.cssScopes.set(e, String(o.__sappCssScope ?? n?.id ?? e)), n?.install) {
           console.log(`🛠️ [sys-kernel] Installing remote [${e}]...`);
           const a = this.getRegisteredApps().find((c) => c.id === e) ?? null;
           await this.install(n, { moduleId: e, basePath: `/app/${e}`, app: a }), this.markModuleInstalled(e), console.log(`✅ [sys-kernel] Remote [${e}] installed successfully.`);
@@ -523,12 +525,14 @@ class Ae {
     })();
     return this.loadingPromises.set(e, t), t;
   };
+  cssScopes = /* @__PURE__ */ new Map();
+  getModuleCssScope = (e) => this.cssScopes.get(e) ?? e;
   pathListeners = /* @__PURE__ */ new Map();
   /**
    * 🧠 MODULE STATE MANAGEMENT
    * Retrieves or initializes a reactive state container for a specific module.
    */
-  getModuleState = (e, t = {}) => (this.state.moduleStates[e] || (this.state.moduleStates[e] = p(t)), this.state.moduleStates[e]);
+  getModuleState = (e, t = {}) => (this.state.moduleStates[e] || (this.state.moduleStates[e] = h(t)), this.state.moduleStates[e]);
   /**
    * 🗺️ [sys-kernel] MFE Entry Registration
    */
@@ -538,7 +542,7 @@ class Ae {
   };
   getModuleEntry = (e) => {
     const t = this.modules.get(e);
-    return typeof t == "function" ? b(U(t)) : t ? b(t) : null;
+    return typeof t == "function" ? b(M(t)) : t ? b(t) : null;
   };
   // --- 🧩 COMPONENT REGISTRY ---
   registerComponent = (e) => {
@@ -551,10 +555,10 @@ class Ae {
     if (!t)
       return console.warn(`⚠️ [sys-kernel] Component not found: ${e}`), null;
     let r;
-    return typeof t == "function" ? r = b(U(t)) : r = b(t), this.componentCache.set(e, r), r;
+    return typeof t == "function" ? r = b(M(t)) : r = b(t), this.componentCache.set(e, r), r;
   };
-  skills = p([]);
-  commands = p([]);
+  skills = h([]);
+  commands = h([]);
   // --- ⚡ SKILLS & COMMANDS REGISTRY ---
   registerSkill = (e) => {
     this.skills.find((t) => t.id === e.id) || (this.skills.push(e), console.log(`✨ [sys-kernel] Skill registered: ${e.id}`));
@@ -601,12 +605,12 @@ class $e {
     this.superApp = e;
   }
   getHeaders() {
-    const e = localStorage.getItem(Se), t = this.superApp?.$appState?.current_workspace || localStorage.getItem(M), r = `req-${Date.now()}-${Math.floor(Math.random() * 1e4)}`, s = {
+    const e = localStorage.getItem(Se), t = this.superApp?.$appState?.current_workspace || localStorage.getItem(U), r = `req-${Date.now()}-${Math.floor(Math.random() * 1e4)}`, s = {
       Authorization: e ? `Bearer ${e}` : "",
       "Content-Type": "application/json",
       "request-id": r
     };
-    return t && (s["x-workspace-id"] = t, localStorage.getItem(M) !== String(t) && localStorage.setItem(M, String(t))), s;
+    return t && (s["x-workspace-id"] = t, localStorage.getItem(U) !== String(t) && localStorage.setItem(U, String(t))), s;
   }
   async request(e, t = {}) {
     try {
@@ -768,7 +772,7 @@ const Pe = new be(), Re = () => {
   return (typeof i.value != "object" || i.value === null) && (console.warn("⚠️ [AppState] Invalid storage detected, resetting to defaults."), i.value = {
     current_app: "workspace",
     current_workspace: null
-  }), p({
+  }), h({
     get current_app() {
       return i.value.current_app;
     },
@@ -806,7 +810,7 @@ function Ce(i) {
     cause: i
   };
 }
-function Ue(i) {
+function Me(i) {
   return function(t) {
     const { baseURL: r, headers: s, withToken: o = !0, workspace: n = !1, onError: a, setup: c, ...l } = t;
     if (!r)
@@ -838,7 +842,7 @@ function Ue(i) {
     ), c?.(u), u;
   };
 }
-const Me = {
+const Ue = {
   en: {
     common: {
       ok: "OK",
@@ -971,13 +975,13 @@ function Oe(i = {}) {
     } catch {
       return null;
     }
-  })() : null, s = p({ locale: r || i.locale || e, messages: {} }), o = /* @__PURE__ */ new Set(), n = (u, d, g) => {
+  })() : null, s = h({ locale: r || i.locale || e, messages: {} }), o = /* @__PURE__ */ new Set(), n = (u, d, g) => {
     const E = Y(d, g || "");
     s.messages[u] = { ...s.messages[u] ?? {}, ...E };
   }, a = (u, d) => {
     for (const [g, E] of Object.entries(u)) n(g, E, d);
   };
-  a(Me), i.messages && a(i.messages);
+  a(Ue), i.messages && a(i.messages);
   const c = (u, d) => s.messages[d]?.[u], l = {
     get locale() {
       return s.locale;
@@ -1236,16 +1240,16 @@ async function Xe(i) {
   const o = new Ae();
   o.$app = e, window.$superApp = o;
   const n = i.theme.register(e, o), a = n.uiStore, c = Oe(i.i18n), l = je(c, { currency: i.currency });
-  o.registerProtocol("i18n", c), c.onLocaleChange((h, y) => o.emit("i18n:locale-changed", { locale: h, previous: y }));
+  o.registerProtocol("i18n", c), c.onLocaleChange((p, y) => o.emit("i18n:locale-changed", { locale: p, previous: y }));
   const u = new $e(s), d = new Ee(i.socket?.url ?? ze());
   d.connect(), o.registerProtocol("api", u), o.registerProtocol("socket", d), u.bind(o);
   const g = i.auth?.tokenKey ?? "accessToken";
-  o.createApi = Ue({
+  o.createApi = Me({
     tokenKey: g,
     message: n.messageService,
     appState: () => o.$appState
   });
-  const E = i.auth?.loginPath ?? "/login", Q = i.layout ?? z({ name: "SappLayout", setup: () => () => q(he) }), X = [
+  const E = i.auth?.loginPath ?? "/login", Q = i.layout ?? z({ name: "SappLayout", setup: () => () => q(pe) }), X = [
     { path: E, name: "Login", component: W(o, i.auth?.loginComponentId ?? "auth.login"), meta: { public: !0 } },
     {
       path: "/",
@@ -1256,10 +1260,10 @@ async function Xe(i) {
       ]
     },
     ...i.routes ?? []
-  ], v = pe({ history: me(i.router?.base), routes: X });
-  v.beforeEach((h, y, f) => {
+  ], v = he({ history: me(i.router?.base), routes: X });
+  v.beforeEach((p, y, f) => {
     const S = localStorage.getItem(g);
-    if (!h.meta.public && !S) return f(E);
+    if (!p.meta.public && !S) return f(E);
     f();
   });
   const _ = { app: e, router: v, pinia: t, superApp: o, discovery: r, api: u, socket: d };
@@ -1271,8 +1275,8 @@ async function Xe(i) {
     message: n.messageService,
     dialog: n.dialogService
   }), await o.loadServerApps(), i.branding) {
-    const { name: h, icon: y, logo: f } = i.branding;
-    h && (document.title = h);
+    const { name: p, icon: y, logo: f } = i.branding;
+    p && (document.title = p);
     const S = y || f;
     if (S) {
       const C = document.querySelector('link[rel~="icon"]') ?? Object.assign(document.createElement("link"), { rel: "icon" });
@@ -1282,10 +1286,10 @@ async function Xe(i) {
   await o.loadPlatformConfig();
   const T = n.appState ?? Re(), D = r.get("system.workspaces");
   D && (T.workspaces = D), o.$appState = T, e.config.globalProperties.$appState = T, e.config.globalProperties.$auth = o.$authState, e.provide("$auth", o.$authState);
-  for (const h of i.features ?? []) {
+  for (const p of i.features ?? []) {
     const y = {
       ..._,
-      featureId: h.id,
+      featureId: p.id,
       registerRoute: (f) => v.addRoute(x, f),
       registerTopRoute: (f) => v.addRoute(f),
       registerComponent: (f) => o.registerComponent(f),
@@ -1294,23 +1298,23 @@ async function Xe(i) {
       registerMessages: (f, S) => c.addMessages(f, S),
       provide: (f, S) => e.provide(f, S)
     };
-    await h.install(y), console.log(`🧩 [sapp] Shell feature installed: ${h.id}`);
+    await p.install(y), console.log(`🧩 [sapp] Shell feature installed: ${p.id}`);
   }
   const m = e.config.globalProperties;
-  return m.$c = (h) => o.getComponent(h), m.$s = o, m.$superApp = o, m.$message = n.messageService, m.$dialog = n.dialogService, m.$i18n = c, m.$t = (h, y) => c.t(h, y), m.$f = l, o.$f = l, e.provide("$i18n", c), e.provide("$f", l), e.provide("ui-store", a), e.provide("$theme", i.tokens), e.provide("$superApp", o), e.provide("$s", o), e.provide("$message", n.messageService), e.provide("$dialog", n.dialogService), {
+  return m.$c = (p) => o.getComponent(p), m.$s = o, m.$superApp = o, m.$message = n.messageService, m.$dialog = n.dialogService, m.$i18n = c, m.$t = (p, y) => c.t(p, y), m.$f = l, o.$f = l, e.provide("$i18n", c), e.provide("$f", l), e.provide("ui-store", a), e.provide("$theme", i.tokens), e.provide("$superApp", o), e.provide("$s", o), e.provide("$message", n.messageService), e.provide("$dialog", n.dialogService), {
     ..._,
-    mount(h = "#app") {
-      return e.use(v), e.mount(h), e;
+    mount(p = "#app") {
+      return e.use(v), e.mount(p), e;
     }
   };
 }
 export {
   $e as A,
-  Me as B,
+  Ue as B,
   be as D,
   Ee as S,
   Ae as a,
-  Ue as b,
+  Me as b,
   Xe as c,
   Re as d,
   ke as e,
@@ -1321,4 +1325,4 @@ export {
   Qe as j,
   Fe as k
 };
-//# sourceMappingURL=createSapp-RcfM8M-W.js.map
+//# sourceMappingURL=createSapp-BPW7yAJK.js.map

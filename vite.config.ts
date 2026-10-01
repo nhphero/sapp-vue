@@ -25,7 +25,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['vue', 'vue-router', 'pinia', '@vueuse/core', 'axios', 'vite', 'module', 'path', 'node:module', 'node:path'],
+      external: ['vue', 'vue-router', 'pinia', '@vueuse/core', 'axios', 'vite', 'module', 'path', 'node:module', 'node:path', 'fs', 'node:fs'],
       output: { chunkFileNames: 'chunks/[name]-[hash].js' },
     },
   },

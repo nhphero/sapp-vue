@@ -115,6 +115,8 @@ export declare class SuperApp implements ISuperApp {
      * 🔗 ESA PROTOCOL: Unified Module Activation
      */
     resolveModule: (moduleId: string) => Promise<void>;
+    private cssScopes;
+    getModuleCssScope: (moduleId: string) => string;
     private pathListeners;
     /**
      * 🧠 MODULE STATE MANAGEMENT
