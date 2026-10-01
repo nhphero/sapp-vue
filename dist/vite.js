@@ -1,24 +1,24 @@
-import { createRequire as c } from "module";
-import { join as i } from "path";
-function f() {
-  let n = null;
+import { createRequire as d } from "module";
+import { join as f } from "path";
+function v() {
+  let o = null;
   return {
     name: "vite-plugin-vue-bridge",
     enforce: "pre",
     configResolved(t) {
       try {
-        const r = c(i(t.root, "package.json"))("vue"), s = Object.keys(r).filter(
-          (o) => o !== "__esModule" && o !== "default" && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(o)
+        const u = d(f(t.root, "package.json"))("vue"), c = Object.keys(u).filter(
+          (n) => n !== "__esModule" && n !== "default" && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(n)
         ), e = [
           "const _Vue = window.__MF_BRIDGE__?.Vue;",
           'if (!_Vue) console.error("🚨 [VUE_BRIDGE] Fatal: window.__MF_BRIDGE__.Vue not found!");'
         ];
-        for (const o of s)
-          e.push(`export const ${o} = _Vue.${o};`);
-        e.push("export const isVue2 = false;"), e.push("export const isVue3 = true;"), e.push("export const Vue = _Vue;"), e.push("export const Vue2 = undefined;"), e.push("export const install = function() {};"), e.push("export const set = function(t, k, v) { t[k] = v; };"), e.push("export const del = function(t, k) { delete t[k]; };"), e.push("export default _Vue;"), n = e.join(`
+        for (const n of c)
+          e.push(`export const ${n} = _Vue.${n};`);
+        e.push("export const isVue2 = false;"), e.push("export const isVue3 = true;"), e.push("export const Vue = _Vue;"), e.push("export const Vue2 = undefined;"), e.push("export const install = function() {};"), e.push("export const set = function(t, k, v) { t[k] = v; };"), e.push("export const del = function(t, k) { delete t[k]; };"), e.push("export default _Vue;"), o = e.join(`
 `);
-      } catch (u) {
-        console.error("[VUE_BRIDGE] Failed to read Vue exports:", u), n = `export * from 'vue';
+      } catch (r) {
+        console.error("[VUE_BRIDGE] Failed to read Vue exports:", r), o = `export * from 'vue';
 export { default } from 'vue';`;
       }
     },
@@ -26,29 +26,45 @@ export { default } from 'vue';`;
       return t === "vue" || t === "vue-demi" ? "\0virtual:vue-bridge" : null;
     },
     load(t) {
-      return t === "\0virtual:vue-bridge" ? n : null;
+      return t === "\0virtual:vue-bridge" ? o : null;
     }
   };
 }
-const p = /@property\s+--[\w-]+\s*\{[^}]*\}/g;
-function d(n = {}) {
-  const t = n.match ?? ((r) => /\/mfe\.css(\?|$)/.test(r)), u = n.scope ?? "#module-viewport, [data-portal]";
+function m(o) {
+  let t = 2166136261;
+  for (let r = 0; r < o.length; r++)
+    t ^= o.charCodeAt(r), t = Math.imul(t, 16777619);
+  return (t >>> 0).toString(16).padStart(8, "0");
+}
+const l = /@property\s+--[\w-]+\s*\{[^}]*\}/g;
+function g(o = {}) {
+  const t = o.match ?? ((u) => /\/mfe\.css(\?|$)/.test(u)), r = o.scope ?? "#module-viewport, [data-portal]";
   return {
     name: "sapp:mfe-scoped-css",
-    transform(r, s) {
-      if (!t(s) || !r.trim()) return null;
-      const e = r.match(p) ?? [], o = r.replace(p, "");
+    transform(u, c) {
+      if (!t(c) || !u.trim()) return null;
+      const e = u.match(l) ?? [], n = u.replace(l, "");
       return { code: `${e.join(`
 `)}
-@scope (${u}) {
-${o}
+@scope (${r}) {
+${n}
 }
 `, map: null };
+    },
+    generateBundle(u, c) {
+      if (o.inlineCss === !1) return;
+      const e = Object.values(c).filter((s) => s.type === "asset" && s.fileName.endsWith(".css")), n = Object.values(c).find((s) => s.type === "chunk" && s.isEntry);
+      if (!e.length || !n || n.type !== "chunk") return;
+      const i = e.map((s) => s.type === "asset" ? String(s.source) : "").join(`
+`), p = `sapp-css-${m(i)}`, a = `(()=>{if(typeof document==='undefined'||document.getElementById(${JSON.stringify(p)}))return;const s=document.createElement('style');s.id=${JSON.stringify(p)};s.textContent=${JSON.stringify(i)};document.head.appendChild(s);})();
+`;
+      n.code = a + n.code;
+      for (const s of e) delete c[s.fileName];
     }
   };
 }
 export {
-  d as mfeScopedCssPlugin,
-  f as vueBridgePlugin
+  g as mfeScopedCssPlugin,
+  v as vueBridgePlugin
 };
 //# sourceMappingURL=vite.js.map
