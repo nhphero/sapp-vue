@@ -95,6 +95,8 @@ export declare class SuperApp implements ISuperApp {
     private builtInUrl;
     /** A registry row (registry.json / apps.registry.*) as the Shell's record. */
     private toRegisteredApp;
+    /** The Shell's own config (discovery) before the platform environment was merged over it. */
+    private localDiscovery;
     /** Branding given to createSapp, kept so an emptied platform field falls back to it. */
     private shellBranding;
     loadPlatformConfig: () => Promise<PlatformConfig | null>;

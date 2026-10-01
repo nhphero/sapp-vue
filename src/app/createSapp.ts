@@ -123,10 +123,7 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
     theme: options.tokens,
     message: services.messageService, dialog: services.dialogService,
   });
-  // Local apps the backend serves (mini app packages) join the registry without manual registration.
-  await superApp.loadServerApps();
-
-  // 7b. Branding → favicon + title
+  // 7a. Branding → favicon + title (the platform config below may replace them)
   if (options.branding) {
     const { name, icon, logo } = options.branding;
     if (name) document.title = name;
@@ -136,8 +133,11 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
       link.href = href; if (!link.parentNode) document.head.appendChild(link);
     }
   }
-  // 7c. Platform config (Admin → Config) → title, favicon, branding, the theme's default look
+  // 7b. Platform config (Admin → Config / Environment): branding, and the environment over the discovery —
+  // before the app registry, whose remote URLs may come from it
   await superApp.loadPlatformConfig();
+  // 7c. The app registry (server): every app joins without per-browser registration.
+  await superApp.loadServerApps();
 
   // 8. Global app state (workspaces pre-filled from discovery)
   const appState = services.appState ?? createAppState();

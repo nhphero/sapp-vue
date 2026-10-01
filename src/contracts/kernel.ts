@@ -77,6 +77,11 @@ export interface PlatformConfig {
     /** Recently used apps shown in the app switcher; 0 hides the row. */
     recentCount: number;
   };
+  /**
+   * Admin → Environment: Shell runtime settings (`master-data.url`, `system.auth_url`…), merged over
+   * the Shell's local config (discovery) — `packages.url` excepted, it is how the Shell finds this file.
+   */
+  environment?: Record<string, string>;
 }
 
 export interface KernelConfig {
@@ -177,9 +182,10 @@ export interface ISuperApp extends ISuperAppCore {
    */
   loadServerApps(): Promise<RegisteredApp[]>;
   /**
-   * Load the platform config (`<package files>/config.json`) and apply it: page title, favicon, the
-   * branding the theme shows. Called by createSapp at boot; call again after saving it. A server that
-   * does not answer leaves everything as it is (returns null).
+   * Load the platform config (`<package files>/config.json`) and apply it: the environment over the
+   * discovery, page title, favicon, the branding the theme shows. Called by createSapp at boot (before
+   * the app registry, whose remote URLs may come from the environment); call again after saving it,
+   * then `loadServerApps()`. A server that does not answer leaves everything as it is (returns null).
    */
   loadPlatformConfig(): Promise<PlatformConfig | null>;
   /**
