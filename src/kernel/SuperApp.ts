@@ -480,15 +480,15 @@ export class SuperApp implements ISuperApp {
     return this.getRegisteredApps().find(a => a.id === saved?.id) ?? this.toRegisteredApp(saved);
   };
 
+  /** The server gives the new app its id (unique, never typed); the slug is its route. */
   public registerApp = async (appData: AppRegistrationInput): Promise<RegisteredApp> => {
-    const id = this.normalizeAppId(appData.id);
-    if (!id) throw new Error('Application ID is required');
+    const slug = this.normalizeAppId(appData.slug ?? '');
+    if (!slug) throw new Error('The slug (route /app/<slug>) is required');
     const type = appData.type === 'package' ? 'package' : 'remote';
     if (type === 'remote' && !appData.url) throw new Error('Application Remote URL is required');
     return this.saveApp({
-      id,
-      slug: this.normalizeAppId(appData.slug ?? '') || id,
-      name: appData.name || id,
+      slug,
+      name: appData.name || slug,
       type,
       url: type === 'remote' ? (appData.url as string).trim().replace(/\/+$/, '') : undefined,
       package: type === 'package' ? appData.package : undefined,

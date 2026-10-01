@@ -36,7 +36,7 @@ import { vueBridgePlugin } from './node_modules/@nhphero/vue-sapp/src/vite';  //
 | Skill | `registerSkill({ id, name, category, icon, handler })` | `superApp.skills` | hiển thị ở sidebar / command palette |
 | Command | `registerCommand({ id, name, category, shortcut, handler })` | `runCommand(id)` | ⌘K |
 | Path listener | `onPathChange(moduleId, handler)` | `runPathAction(moduleId, subPath)` | routing nội bộ của mini app |
-| Remote app | `registerApp / updateApp / deleteApp` | `getRegisteredApps()` | persist ở `localStorage['erp_registered_apps']`, sync vào `moduleManifest`. `updateApp(id, { id: newSlug })` đổi slug (route `/app/<slug>` và key manifest); default app bị đổi tên được ghi vào `erp_registered_apps_hidden` để không bị thêm lại |
+| App (remote / package) | `registerApp / updateApp / deleteApp` (async, admin) | `getRegisteredApps()` | **registry trên server** (bảng `sys_apps`): ghi qua action `apps.registry.save/remove`, Shell đọc file tĩnh `<package files>/registry.json` lúc boot (`loadServerApps()`), sync vào `moduleManifest`. `id` là khoá cố định, `slug` là route đổi được (`updateApp(id, { slug })`). Remote app để trống URL = lấy `<id>.url` của config Shell. Server chưa trả lời thì chỉ có built-in (`admin`, `workspace`) + `registry.apps` của config. `importLocalApps()` đẩy app cũ trong localStorage `erp_registered_apps` (+ `registry.apps` của config) lên server một lần |
 
 Proxy `$`: mọi truy cập `superApp.$xyz` được resolve theo thứ tự protocol → business module (bị chặn nếu `isEnabled === false`) → field thật của class (`$router`, `$message`, `$vue`...).
 

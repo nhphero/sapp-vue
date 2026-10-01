@@ -115,6 +115,7 @@ export declare class SuperApp implements ISuperApp {
     syncManifestWithRegisteredApps: () => void;
     /** Saves through the server's registry (admin), then reloads it — every user sees the change. */
     private saveApp;
+    /** The server gives the new app its id (unique, never typed); the slug is its route. */
     registerApp: (appData: AppRegistrationInput) => Promise<RegisteredApp>;
     normalizeAppId: (id: string) => string;
     updateApp: (id: string, updates: AppUpdateInput) => Promise<RegisteredApp>;

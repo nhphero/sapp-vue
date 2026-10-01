@@ -1,15 +1,15 @@
 import * as Q from "vue";
-import { reactive as m, inject as X, provide as Z, h as x, defineComponent as z, onUnmounted as ee, onMounted as te, triggerRef as re, shallowRef as se, defineAsyncComponent as M, markRaw as E, nextTick as oe, watchEffect as ne, watch as q, computed as ie, ref as ae, createApp as ce } from "vue";
+import { reactive as h, inject as X, provide as Z, h as x, defineComponent as z, onUnmounted as ee, onMounted as te, triggerRef as re, shallowRef as se, defineAsyncComponent as M, markRaw as E, nextTick as oe, watchEffect as ne, watch as q, computed as ie, ref as ae, createApp as ce } from "vue";
 import * as le from "pinia";
 import { createPinia as ue } from "pinia";
 import * as pe from "vue-router";
 import { RouterView as de, createRouter as ge, createWebHistory as fe } from "vue-router";
-import * as me from "@vueuse/core";
+import * as he from "@vueuse/core";
 import { useLocalStorage as V } from "@vueuse/core";
-import { S as _, R as b, A as he, a as I, f as G, b as ye, c as O, E as k, M as K } from "./format-BUIIBrkU.js";
+import { S as _, R as b, A as me, a as U, f as G, b as ye, c as O, E as k, M as K } from "./format-BUIIBrkU.js";
 import N from "axios";
 function Se() {
-  const n = m({
+  const n = h({
     user: null,
     realmRoles: [],
     clientRoles: {},
@@ -19,7 +19,7 @@ function Se() {
     return [.../* @__PURE__ */ new Set([...n.realmRoles, ...Object.values(n.clientRoles).flat()])];
   }
   const t = (s) => s.toLowerCase(), r = () => new Set(e().map(t));
-  return m({
+  return h({
     get user() {
       return n.user;
     },
@@ -72,12 +72,12 @@ class we {
   modules = /* @__PURE__ */ new Map();
   components = /* @__PURE__ */ new Map();
   // 🛰️ ESA v5: Reactive Registries
-  _protocols = m(/* @__PURE__ */ new Map());
-  _modules = m(/* @__PURE__ */ new Map());
+  _protocols = h(/* @__PURE__ */ new Map());
+  _modules = h(/* @__PURE__ */ new Map());
   // 🧠 ESA v5: Event Bus (Central Nervous System)
   _eventHandlers = /* @__PURE__ */ new Map();
   // ⚡ Reactive state for UI elements (Navigation, Command Palette)
-  state = m({
+  state = h({
     isInitializing: !0,
     skills: [],
     commands: [],
@@ -181,7 +181,7 @@ class we {
    */
   $vue = {
     ref: ae,
-    reactive: m,
+    reactive: h,
     computed: ie,
     watch: q,
     watchEffect: ne,
@@ -199,7 +199,7 @@ class we {
     useLocalStorage: V
   };
   init = (e) => {
-    console.log("🚀 [sys-kernel] SuperApp Platform Kernel Initializing..."), this.$app = e.app, this.$router = e.router, this.$api = e.api, this.$config = e.config ? m({ ...e.config }) : null, this.$theme = e.theme, this.$message = e.message, this.$dialog = e.dialog, this.state.isInitializing = !1, this.syncManifestWithRegisteredApps();
+    console.log("🚀 [sys-kernel] SuperApp Platform Kernel Initializing..."), this.$app = e.app, this.$router = e.router, this.$api = e.api, this.$config = e.config ? h({ ...e.config }) : null, this.$theme = e.theme, this.$message = e.message, this.$dialog = e.dialog, this.state.isInitializing = !1, this.syncManifestWithRegisteredApps();
   };
   // --- 🌐 DYNAMIC APPLICATION REGISTRY ---
   formatAppEntryUrl = (e) => {
@@ -373,14 +373,14 @@ class we {
     const r = await this.doAction("apps.registry.save", { app: e, create: t });
     return await this.loadServerApps(), this.getRegisteredApps().find((s) => s.id === r?.id) ?? this.toRegisteredApp(r);
   };
+  /** The server gives the new app its id (unique, never typed); the slug is its route. */
   registerApp = async (e) => {
-    const t = this.normalizeAppId(e.id);
-    if (!t) throw new Error("Application ID is required");
+    const t = this.normalizeAppId(e.slug ?? "");
+    if (!t) throw new Error("The slug (route /app/<slug>) is required");
     const r = e.type === "package" ? "package" : "remote";
     if (r === "remote" && !e.url) throw new Error("Application Remote URL is required");
     return this.saveApp({
-      id: t,
-      slug: this.normalizeAppId(e.slug ?? "") || t,
+      slug: t,
       name: e.name || t,
       type: r,
       url: r === "remote" ? e.url.trim().replace(/\/+$/, "") : void 0,
@@ -506,7 +506,7 @@ class we {
    * 🧠 MODULE STATE MANAGEMENT
    * Retrieves or initializes a reactive state container for a specific module.
    */
-  getModuleState = (e, t = {}) => (this.state.moduleStates[e] || (this.state.moduleStates[e] = m(t)), this.state.moduleStates[e]);
+  getModuleState = (e, t = {}) => (this.state.moduleStates[e] || (this.state.moduleStates[e] = h(t)), this.state.moduleStates[e]);
   /**
    * 🗺️ [sys-kernel] MFE Entry Registration
    */
@@ -531,8 +531,8 @@ class we {
     let r;
     return typeof t == "function" ? r = E(M(t)) : r = E(t), this.componentCache.set(e, r), r;
   };
-  skills = m([]);
-  commands = m([]);
+  skills = h([]);
+  commands = h([]);
   // --- ⚡ SKILLS & COMMANDS REGISTRY ---
   registerSkill = (e) => {
     this.skills.find((t) => t.id === e.id) || (this.skills.push(e), console.log(`✨ [sys-kernel] Skill registered: ${e.id}`));
@@ -579,12 +579,12 @@ class Ae {
     this.superApp = e;
   }
   getHeaders() {
-    const e = localStorage.getItem(he), t = this.superApp?.$appState?.current_workspace || localStorage.getItem(I), r = `req-${Date.now()}-${Math.floor(Math.random() * 1e4)}`, s = {
+    const e = localStorage.getItem(me), t = this.superApp?.$appState?.current_workspace || localStorage.getItem(U), r = `req-${Date.now()}-${Math.floor(Math.random() * 1e4)}`, s = {
       Authorization: e ? `Bearer ${e}` : "",
       "Content-Type": "application/json",
       "request-id": r
     };
-    return t && (s["x-workspace-id"] = t, localStorage.getItem(I) !== String(t) && localStorage.setItem(I, String(t))), s;
+    return t && (s["x-workspace-id"] = t, localStorage.getItem(U) !== String(t) && localStorage.setItem(U, String(t))), s;
   }
   async request(e, t = {}) {
     try {
@@ -746,7 +746,7 @@ const be = new Ee(), Re = () => {
   return (typeof n.value != "object" || n.value === null) && (console.warn("⚠️ [AppState] Invalid storage detected, resetting to defaults."), n.value = {
     current_app: "workspace",
     current_workspace: null
-  }), m({
+  }), h({
     get current_app() {
       return n.value.current_app;
     },
@@ -762,7 +762,7 @@ const be = new Ee(), Re = () => {
     // 🏢 Global Workspace Cache (Populated from Discovery)
     workspaces: []
   });
-}, _e = 3e4, U = "x-request-id";
+}, _e = 3e4, I = "x-request-id";
 function Pe() {
   if (typeof crypto.randomUUID == "function")
     return crypto.randomUUID();
@@ -780,7 +780,7 @@ function Ce(n) {
     data: e,
     url: n.config?.url,
     method: n.config?.method?.toUpperCase(),
-    requestId: n.config?.headers?.get?.(U)?.toString(),
+    requestId: n.config?.headers?.get?.(I)?.toString(),
     cause: n
   };
 }
@@ -796,7 +796,7 @@ function Te(n) {
       headers: { Accept: "application/json", ...s }
     });
     return l.interceptors.request.use((u) => {
-      if (u.headers.has(U) || u.headers.set(U, Pe()), o) {
+      if (u.headers.has(I) || u.headers.set(I, Pe()), o) {
         const d = localStorage.getItem(n.tokenKey);
         d && !u.headers.has("Authorization") && u.headers.set("Authorization", `Bearer ${d}`);
       }
@@ -935,7 +935,7 @@ const Me = {
     s && typeof s == "object" ? W(s, o, t) : t[o] = String(s);
   }
   return t;
-}, Ie = (n, e) => e ? n.replace(/\{(\w+)\}/g, (t, r) => e[r] === void 0 || e[r] === null ? t : String(e[r])) : n, Ue = (n, e) => {
+}, Ue = (n, e) => e ? n.replace(/\{(\w+)\}/g, (t, r) => e[r] === void 0 || e[r] === null ? t : String(e[r])) : n, Ie = (n, e) => {
   if (e?.count === void 0 || e.count === null || !n.includes("|")) return n;
   const t = Number(e.count);
   if (!Number.isFinite(t)) return n;
@@ -949,7 +949,7 @@ function Le(n = {}) {
     } catch {
       return null;
     }
-  })() : null, s = m({ locale: r || n.locale || e, messages: {} }), o = /* @__PURE__ */ new Set(), i = (l, u, d) => {
+  })() : null, s = h({ locale: r || n.locale || e, messages: {} }), o = /* @__PURE__ */ new Set(), i = (l, u, d) => {
     const v = W(u, d || "");
     s.messages[l] = { ...s.messages[l] ?? {}, ...v };
   }, a = (l, u) => {
@@ -969,7 +969,7 @@ function Le(n = {}) {
     },
     t(l, u) {
       const d = c(l, s.locale) ?? c(l, e) ?? u?.default ?? l;
-      return Ie(Ue(d, u), u);
+      return Ue(Ie(d, u), u);
     },
     te(l, u) {
       return c(l, u ?? s.locale) !== void 0 || !u && c(l, e) !== void 0;
@@ -1204,7 +1204,7 @@ const Fe = {}, j = "Root", xe = Fe ?? {}, ze = (n) => n || xe.VITE_MASTER_API_UR
   return typeof t == "function" ? t() : t;
 };
 async function Qe(n) {
-  je({ Vue: Q, Pinia: le, VueRouter: pe, VueUse: me });
+  je({ Vue: Q, Pinia: le, VueRouter: pe, VueUse: he });
   const e = ce(n.root), t = ue();
   e.use(t);
   const r = n.discovery ?? be;
@@ -1274,8 +1274,8 @@ async function Qe(n) {
     };
     await f.install(y), console.log(`🧩 [sapp] Shell feature installed: ${f.id}`);
   }
-  const h = e.config.globalProperties;
-  return h.$c = (f) => o.getComponent(f), h.$s = o, h.$superApp = o, h.$message = i.messageService, h.$dialog = i.dialogService, h.$i18n = c, h.$t = (f, y) => c.t(f, y), h.$f = p, o.$f = p, e.provide("$i18n", c), e.provide("$f", p), e.provide("ui-store", a), e.provide("$theme", n.tokens), e.provide("$superApp", o), e.provide("$s", o), e.provide("$message", i.messageService), e.provide("$dialog", i.dialogService), {
+  const m = e.config.globalProperties;
+  return m.$c = (f) => o.getComponent(f), m.$s = o, m.$superApp = o, m.$message = i.messageService, m.$dialog = i.dialogService, m.$i18n = c, m.$t = (f, y) => c.t(f, y), m.$f = p, o.$f = p, e.provide("$i18n", c), e.provide("$f", p), e.provide("ui-store", a), e.provide("$theme", n.tokens), e.provide("$superApp", o), e.provide("$s", o), e.provide("$message", i.messageService), e.provide("$dialog", i.dialogService), {
     ...P,
     mount(f = "#app") {
       return e.use($), e.mount(f), e;
@@ -1299,4 +1299,4 @@ export {
   Je as j,
   je as k
 };
-//# sourceMappingURL=createSapp-ClTVtNXQ.js.map
+//# sourceMappingURL=createSapp-DDKzryu-.js.map
