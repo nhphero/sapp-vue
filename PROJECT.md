@@ -77,6 +77,7 @@ interface RegisteredApp         { id; name; url; entryUrl; isSystem?; isEnabled?
 interface IAppState             { current_app; current_workspace; workspaces }
 interface MfBridge              { Vue; Pinia; VueRouter; VueUse? }
 interface ITheme                { id; name; register(app, superApp, { uiStore }): ThemeServices }   // implement bởi sapp-theme-default
+interface IThemeConfig                     // superApp.$themeConfig: set / reset / useDefaults(look, { enforce }) / preview(look | null); PlatformConfig.look = giao diện chung (Admin → Theme)
 interface MessageService / DialogService   // $message (toast + alert/confirm/prompt) / $dialog (contracts/ui.ts)
 interface IAuthState                       // $auth trong template, superApp.$authState trong script, app.useAuth() ở mini app (contracts/auth.ts)
 interface CreateApi / ApiClientError       // superApp.createApi({ baseURL, headers, onError… }) → axios instance cho backend riêng của app (contracts/api-client.ts)
