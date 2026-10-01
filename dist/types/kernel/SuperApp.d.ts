@@ -90,6 +90,7 @@ export declare class SuperApp implements ISuperApp {
     /** Branding given to createSapp, kept so an emptied platform field falls back to it. */
     private shellBranding;
     loadPlatformConfig: () => Promise<PlatformConfig | null>;
+    resolvePackageFileUrl: (pathOrUrl: string) => string;
     private manifestCache;
     loadAppManifest: (appId: string) => Promise<Record<string, any> | null>;
     private getDefaultApps;

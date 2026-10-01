@@ -31,7 +31,6 @@ import type {
   II18n,
   PlatformConfig,
   BrandingOptions,
-  IThemeConfig,
 } from '../contracts';
 import { REGISTERED_APPS_STORAGE_KEY, HIDDEN_DEFAULT_APPS_STORAGE_KEY, SUPERAPP_EVENTS } from '../contracts';
 
@@ -335,6 +334,8 @@ export class SuperApp implements ISuperApp {
     this.state.platformConfig = config;
 
     const general = config.general ?? ({} as PlatformConfig['general']);
+    const logo = general.logo ? this.resolvePackageFileUrl(general.logo) : '';
+    const favicon = general.favicon ? this.resolvePackageFileUrl(general.favicon) : '';
     if (this.$config) {
       this.shellBranding ??= { ...(this.$config.branding ?? { name: '' }) };
       const shell = this.shellBranding;
@@ -342,10 +343,10 @@ export class SuperApp implements ISuperApp {
         ...shell,
         name: general.title || shell.name,
         tagline: general.description || shell.tagline,
-        logo: general.logo || shell.logo,
+        logo: logo || shell.logo,
         // A platform logo has no dark variant of its own — the light plate is used instead.
-        logoDark: general.logo ? undefined : shell.logoDark,
-        icon: general.favicon || shell.icon,
+        logoDark: logo ? undefined : shell.logoDark,
+        icon: favicon || shell.icon,
       };
     }
     const branding = this.$config?.branding;
@@ -356,15 +357,11 @@ export class SuperApp implements ISuperApp {
       link.href = href;
       if (!link.parentNode) document.head.appendChild(link);
     }
-
-    const theme = config.theme;
-    const themeConfig = (this as any).$themeConfig as IThemeConfig | undefined;
-    if (theme && themeConfig?.useDefaults) {
-      const { package: _pkg, allowUserOverride, ...look } = theme;
-      themeConfig.useDefaults(look, { enforce: allowUserOverride === false });
-    }
     return config;
   };
+
+  public resolvePackageFileUrl = (pathOrUrl: string): string =>
+    /^([a-z][a-z0-9+.-]*:|\/)/i.test(pathOrUrl) ? pathOrUrl : `${this.getPackageFilesBaseUrl()}/${pathOrUrl.replace(/^\.?\/+/, '')}`;
 
   private manifestCache = new Map<string, Promise<Record<string, any> | null>>();
 

@@ -1,7 +1,7 @@
 import { A as i, a as n, b as A, E as P, H as d, I as p, c as T, M as f, R as O, S as R, e as l, f as M, d as I } from "./chunks/format-BUIIBrkU.js";
 import { M as N, a as u, d as g, b as y } from "./chunks/feature-CQOHnwJM.js";
 import { THEME_COMPONENT_IDS as h, defineErpModule as C } from "./contracts.js";
-import { A as L, B as Y, D as m, S as v, a as w, b as B, d as F, e as U, f as k, g as x, h as b, c as H, i as V, j as $, k as j } from "./chunks/createSapp-BWTGm6j7.js";
+import { A as L, B as Y, D as m, S as v, a as w, b as B, d as F, e as U, f as k, g as x, h as b, c as H, i as V, j as $, k as j } from "./chunks/createSapp-RcfM8M-W.js";
 function S(o) {
   const a = /* @__PURE__ */ new Map(), s = /* @__PURE__ */ new Set();
   function t(e, r) {

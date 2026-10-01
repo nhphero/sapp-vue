@@ -51,28 +51,21 @@ export interface BrandingOptions {
 }
 /**
  * What an admin sets for the whole platform (Admin → Config), read by the Shell at boot from
- * `<package files>/config.json`. An empty string keeps what the Shell / theme ships with.
+ * `<package files>/config.json`. An empty string keeps what the Shell ships with. Not a mini app's
+ * config — each mini app has its own src/config.ts.
  */
 export interface PlatformConfig {
+    /** logo / favicon: a URL, or a path on the package files host (`_assets/logo-<hash>.png`) — see `resolvePackageFileUrl`. */
     general: {
         title: string;
         description: string;
         logo: string;
         favicon: string;
     };
+    /** A theme package and its version (empty = built into the Shell / the package's current version). */
     theme: {
-        /** The theme package meant for the Shell (informational until themes load from packages). */
         package: string;
-        mode: 'light' | 'dark';
-        brand: string;
-        font: number;
-        density: number;
-        radius: number;
-        shadow: number;
-        fontFamily: string;
-        surface: string;
-        /** false: users keep the platform look, the theme panel is locked. */
-        allowUserOverride: boolean;
+        version: string;
     };
     apps: {
         /** Recently used apps shown in the app switcher; 0 hides the row. */
@@ -169,10 +162,12 @@ export interface ISuperApp extends ISuperAppCore {
     loadServerApps(): Promise<RegisteredApp[]>;
     /**
      * Load the platform config (`<package files>/config.json`) and apply it: page title, favicon, the
-     * branding the theme shows, the theme's default look. Called by createSapp at boot; call again after
-     * saving it. A server that does not answer leaves everything as it is (returns null).
+     * branding the theme shows. Called by createSapp at boot; call again after saving it. A server that
+     * does not answer leaves everything as it is (returns null).
      */
     loadPlatformConfig(): Promise<PlatformConfig | null>;
+    /** A path on the package files host (`_assets/logo.png`) as a URL; URLs (http, data:, /…) unchanged. */
+    resolvePackageFileUrl(pathOrUrl: string): string;
     /**
      * The manifest.json of a registered app's current source — a package app's deployed version
      * (`<package files>/<package>/<version>/manifest.json`, with `version`, `publishedAt`…), or a remote
