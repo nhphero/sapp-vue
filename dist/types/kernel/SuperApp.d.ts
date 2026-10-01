@@ -120,7 +120,8 @@ export declare class SuperApp implements ISuperApp {
     normalizeAppId: (id: string) => string;
     updateApp: (id: string, updates: AppUpdateInput) => Promise<RegisteredApp>;
     findAppByRoute: (key: string) => RegisteredApp | undefined;
-    appPath: (appId: string, subPath?: string) => string;
+    getApp: (appIdOrCode: string) => RegisteredApp | undefined;
+    appPath: (appIdOrCode: string, subPath?: string) => string;
     deleteApp: (id: string) => Promise<boolean>;
     /**
      * Apps this browser registered before the registry moved to the server (localStorage

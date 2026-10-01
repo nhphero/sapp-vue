@@ -47,8 +47,13 @@ export type PathChangeHandler = (subPath: string) => void;
 export type AppSourceType = 'remote' | 'package';
 /** Micro-frontend record persisted in `erp_registered_apps`. */
 export interface RegisteredApp {
-    /** The app's key for good — registry, deployment, module, state. Never changes. */
+    /** The app's key for good — registry, deployment, module, state. A UUID from the server; never changes. */
     id: string;
+    /**
+     * Optional machine name, fixed: what code and config know the app by — `admin`, `<code>.url` in the
+     * Shell config, the app a source publishes to. `appPath()` / `findAppByRoute()` accept it.
+     */
+    code?: string | null;
     /** Its route, `/app/<slug>`; changeable. Absent = the id. Use `superApp.appPath(id)` for links. */
     slug?: string;
     name: string;

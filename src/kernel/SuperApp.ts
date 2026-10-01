@@ -328,9 +328,11 @@ export class SuperApp implements ISuperApp {
   /** A registry row (registry.json / apps.registry.*) as the Shell's record. */
   private toRegisteredApp = (row: any): RegisteredApp => {
     const id = String(row.id);
+    const code = row.code ? String(row.code) : null;
     const common = {
       id,
-      slug: row.slug || id,
+      code,
+      slug: row.slug || code || id,
       name: row.name || id,
       description: row.description || '',
       icon: row.icon || (row.type === 'package' ? 'Package' : 'Layers'),
@@ -343,8 +345,8 @@ export class SuperApp implements ISuperApp {
       const app = { ...common, type: 'package' as const, package: row.package ?? undefined, version: row.version ?? undefined, channel: row.channel ?? null, url: this.getApiBaseUrl() };
       return { ...app, entryUrl: this.resolveAppEntry(app) };
     }
-    // An empty URL (built-ins) comes from the Shell config of this environment.
-    const url = String(row.url || this.builtInUrl(id)).replace(/\/+$/, '');
+    // An empty URL (built-ins) comes from the Shell config of this environment: `<code>.url`.
+    const url = String(row.url || this.builtInUrl(code ?? id)).replace(/\/+$/, '');
     return { ...common, type: 'remote', url, entryUrl: url ? this.formatAppEntryUrl(url) : '' };
   };
 
@@ -423,8 +425,8 @@ export class SuperApp implements ISuperApp {
 
   /** Stand-ins while the server's registry has not answered (it seeds the same built-ins). */
   private getBuiltInApps = (): RegisteredApp[] => [
-    { id: 'admin', name: 'Admin Management', description: 'Platform Governance & Applications Registry', icon: 'Shield', isSystem: true },
-    { id: 'workspace', name: 'Workspace Hub', description: 'Logic Orchestration & Flow Designer', icon: 'Globe', isSystem: true },
+    { id: 'admin', code: 'admin', name: 'Admin Management', description: 'Platform Governance & Applications Registry', icon: 'Shield', isSystem: true },
+    { id: 'workspace', code: 'workspace', name: 'Workspace Hub', description: 'Logic Orchestration & Flow Designer', icon: 'Globe', isSystem: true },
   ].map(app => this.toRegisteredApp({ ...app, type: 'remote', url: '' }));
 
   /**
@@ -438,7 +440,7 @@ export class SuperApp implements ISuperApp {
     if (!Array.isArray(declared)) return [];
     return declared
       .filter((app: any) => app?.id && (app.type === 'package' || typeof this.state.discovery?.[`${app.id}.url`] === 'string'))
-      .map((app: any): RegisteredApp => ({ ...this.toRegisteredApp({ ...app, isSystem: true, url: '' }), managedBy: undefined }));
+      .map((app: any): RegisteredApp => ({ ...this.toRegisteredApp({ ...app, code: app.id, isSystem: true, url: '' }), managedBy: undefined }));
   };
 
   /** The server's registry (sys_apps), then config-declared apps; the built-ins until the server answers. */
@@ -448,8 +450,14 @@ export class SuperApp implements ISuperApp {
       ...this.getConfiguredApps(),
       ...(this.serverAppsLoaded ? [] : this.getBuiltInApps()),
     ];
+    // One record per app: an id or a code seen earlier (the server's) wins.
     const seen = new Set<string>();
-    return sources.filter(app => !seen.has(app.id) && seen.add(app.id));
+    return sources.filter(app => {
+      if (seen.has(app.id) || (app.code && seen.has(`code:${app.code}`))) return false;
+      seen.add(app.id);
+      if (app.code) seen.add(`code:${app.code}`);
+      return true;
+    });
   };
 
   public syncManifestWithRegisteredApps = () => {
@@ -513,13 +521,18 @@ export class SuperApp implements ISuperApp {
 
   public findAppByRoute = (key: string): RegisteredApp | undefined => {
     const apps = this.getRegisteredApps();
-    return apps.find(a => (a.slug || a.id) === key) ?? apps.find(a => a.id === key);
+    return apps.find(a => (a.slug || a.id) === key) ?? apps.find(a => a.id === key) ?? apps.find(a => a.code === key);
   };
 
-  public appPath = (appId: string, subPath = ''): string => {
-    const app = this.getRegisteredApps().find(a => a.id === appId);
+  public getApp = (appIdOrCode: string): RegisteredApp | undefined => {
+    const apps = this.getRegisteredApps();
+    return apps.find(a => a.id === appIdOrCode) ?? apps.find(a => a.code === appIdOrCode);
+  };
+
+  public appPath = (appIdOrCode: string, subPath = ''): string => {
+    const app = this.getApp(appIdOrCode);
     const sub = subPath.replace(/^\/+/, '');
-    return `/app/${app?.slug || appId}${sub ? `/${sub}` : ''}`;
+    return `/app/${app?.slug || appIdOrCode}${sub ? `/${sub}` : ''}`;
   };
 
   public deleteApp = async (id: string): Promise<boolean> => {
@@ -548,7 +561,8 @@ export class SuperApp implements ISuperApp {
     const candidates = [
       ...(Array.isArray(local) ? local : []).filter(app => app?.id && app.type !== 'package' && app.managedBy !== 'server' && app.url && !['admin', 'workspace'].includes(app.id)),
       ...configured,
-    ].filter(app => !this.state.serverApps.some(s => s.id === app.id));
+    ].filter(app => !this.state.serverApps.some(s => s.id === app.id || s.code === app.id))
+      .map(app => ({ ...app, code: app.code ?? app.id }));
     if (!candidates.length) {
       try { localStorage.removeItem(REGISTERED_APPS_STORAGE_KEY); } catch { /* storage blocked */ }
       return { imported: [], skipped: [] };
