@@ -60,6 +60,7 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
 
   // 3. Kernel + theme (theme first: modules and features resolve `ui.*` components)
   const superApp = new SuperApp() as unknown as ISuperApp;
+  (superApp as any).discoveryService = discovery;
   superApp.$app = app; // available to `install(app, superApp)` modules before kernel init
   (window as any).$superApp = superApp;
   const services = options.theme.register(app, superApp);
@@ -133,8 +134,7 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
       link.href = href; if (!link.parentNode) document.head.appendChild(link);
     }
   }
-  // 7b. Platform config (Admin → Config / Environment): branding, and the environment over the discovery —
-  // before the app registry, whose remote URLs may come from it
+  // 7b. Platform config (Admin → Config): branding (the environment came with the discovery, step 2)
   await superApp.loadPlatformConfig();
   // 7c. The app registry (server): every app joins without per-browser registration.
   await superApp.loadServerApps();

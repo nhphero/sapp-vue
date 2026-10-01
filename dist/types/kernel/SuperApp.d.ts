@@ -1,7 +1,7 @@
 import { reactive, markRaw, ref, watch, watchEffect, nextTick, defineAsyncComponent, shallowRef, triggerRef, defineComponent, h, provide, inject, type App } from 'vue';
 import type { Router } from 'vue-router';
 import { useLocalStorage } from '@vueuse/core';
-import type { ISuperApp, ISuperAppModule, SappInstallable, IProtocol, KernelInitOptions, KernelConfig, KernelState, ComponentRegistration, SkillRegistration, CommandRegistration, ModuleEntryRegistration, PathChangeHandler, RegisteredApp, AppRegistrationInput, AppUpdateInput, PingResult, IAppState, IAuthState, IFormatService, IPolicyService, CreateApi, II18n, PlatformConfig } from '../contracts';
+import type { ISuperApp, ISuperAppModule, SappInstallable, IProtocol, KernelInitOptions, KernelConfig, KernelState, ComponentRegistration, SkillRegistration, CommandRegistration, ModuleEntryRegistration, PathChangeHandler, RegisteredApp, AppRegistrationInput, AppUpdateInput, PingResult, IAppState, IAuthState, IFormatService, IPolicyService, CreateApi, II18n, PlatformConfig, IDiscoveryService } from '../contracts';
 /** @deprecated Use `KernelInitOptions` from `@nhphero/vue-sapp` contracts. */
 export type AppConfig = KernelInitOptions;
 export declare class SuperApp implements ISuperApp {
@@ -95,8 +95,9 @@ export declare class SuperApp implements ISuperApp {
     private builtInUrl;
     /** A registry row (registry.json / apps.registry.*) as the Shell's record. */
     private toRegisteredApp;
-    /** The Shell's own config (discovery) before the platform environment was merged over it. */
-    private localDiscovery;
+    /** The Shell's runtime config source (set by createSapp): reloads the environment. */
+    discoveryService: IDiscoveryService | null;
+    reloadEnvironment: () => Promise<void>;
     /** Branding given to createSapp, kept so an emptied platform field falls back to it. */
     private shellBranding;
     loadPlatformConfig: () => Promise<PlatformConfig | null>;

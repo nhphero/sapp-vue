@@ -1,7 +1,7 @@
 /**
  * 🛰️ Discovery Contracts
- * Runtime configuration merged from `/config.json` (static) and the
- * `/system/v1/discovery` endpoint (dynamic).
+ * Runtime configuration: the `/system/v1/discovery` endpoint, `/config.json` (static) over it, and the
+ * platform environment (`<backend>/environment.json`, Admin → Environment) over both.
  */
 
 export interface SystemConfig {
@@ -20,4 +20,6 @@ export interface IDiscoveryService {
   initialize(superApp?: { state: { discovery: Record<string, any> } }): Promise<void>;
   get<T = any>(key: string, defaultValue?: T): T;
   getAll(): SystemConfig;
+  /** Fetches the platform environment again and returns the merged config. */
+  reloadEnvironment?(): Promise<SystemConfig>;
 }

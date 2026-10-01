@@ -1,7 +1,7 @@
 /**
  * 🛰️ Discovery Contracts
- * Runtime configuration merged from `/config.json` (static) and the
- * `/system/v1/discovery` endpoint (dynamic).
+ * Runtime configuration: the `/system/v1/discovery` endpoint, `/config.json` (static) over it, and the
+ * platform environment (`<backend>/environment.json`, Admin → Environment) over both.
  */
 export interface SystemConfig {
     /** Base URL of the master backend (overrides VITE_MASTER_API_URL). */
@@ -22,5 +22,7 @@ export interface IDiscoveryService {
     }): Promise<void>;
     get<T = any>(key: string, defaultValue?: T): T;
     getAll(): SystemConfig;
+    /** Fetches the platform environment again and returns the merged config. */
+    reloadEnvironment?(): Promise<SystemConfig>;
 }
 //# sourceMappingURL=discovery.d.ts.map

@@ -31,6 +31,7 @@ import type {
   II18n,
   PlatformConfig,
   BrandingOptions,
+  IDiscoveryService,
 } from '../contracts';
 import { REGISTERED_APPS_STORAGE_KEY, SUPERAPP_EVENTS } from '../contracts';
 
@@ -350,8 +351,25 @@ export class SuperApp implements ISuperApp {
     return { ...common, type: 'remote', url, entryUrl: url ? this.formatAppEntryUrl(url) : '' };
   };
 
-  /** The Shell's own config (discovery) before the platform environment was merged over it. */
-  private localDiscovery: Record<string, any> | null = null;
+  /** The Shell's runtime config source (set by createSapp): reloads the environment. */
+  public discoveryService: IDiscoveryService | null = null;
+
+  public reloadEnvironment = async (): Promise<void> => {
+    const merged = await this.discoveryService?.reloadEnvironment?.();
+    if (!merged) return;
+    const before = this.state.discovery ?? {};
+    this.state.discovery = merged;
+    // `<module>.url` entries that changed win over what the manifest had.
+    if (this.$config) {
+      const manifest = (this.$config.moduleManifest ??= {});
+      for (const [key, value] of Object.entries(merged)) {
+        if (key.endsWith('.url') && typeof value === 'string' && value && before[key] !== value) {
+          manifest[key.slice(0, -'.url'.length)] = this.formatAppEntryUrl(value);
+        }
+      }
+    }
+    await this.loadServerApps();
+  };
 
   /** Branding given to createSapp, kept so an emptied platform field falls back to it. */
   private shellBranding: BrandingOptions | null = null;
@@ -371,20 +389,6 @@ export class SuperApp implements ISuperApp {
       return null;
     }
     this.state.platformConfig = config;
-
-    // Environment (Admin → Environment) over the Shell's own config; a key removed there falls back to it.
-    this.localDiscovery ??= { ...this.state.discovery };
-    const environment = Object.fromEntries(Object.entries(config.environment ?? {})
-      .filter(([key, value]) => typeof value === 'string' && key !== 'packages.url'));
-    this.state.discovery = { ...this.localDiscovery, ...environment };
-    // `<module>.url` entries win over what the manifest had from the local config.
-    if (this.$config) {
-      const manifest = (this.$config.moduleManifest ??= {});
-      for (const [key, value] of Object.entries(environment)) {
-        if (key.endsWith('.url') && value) manifest[key.slice(0, -'.url'.length)] = this.formatAppEntryUrl(value);
-      }
-    }
-    this.syncManifestWithRegisteredApps();
 
     const general = config.general ?? ({} as PlatformConfig['general']);
     const logo = general.logo ? this.resolvePackageFileUrl(general.logo) : '';
