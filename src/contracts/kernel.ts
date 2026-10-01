@@ -197,9 +197,13 @@ export interface ISuperApp extends ISuperAppCore {
    */
   loadAppManifest(appId: string): Promise<Record<string, any> | null>;
   getRegisteredApps(): RegisteredApp[];
+  /** The app a `/app/<key>` route names: by slug, else by id (links made before a slug change keep working). */
+  findAppByRoute(key: string): RegisteredApp | undefined;
+  /** Route of an app by its id: `/app/<slug>[/<subPath>]`. */
+  appPath(appId: string, subPath?: string): string;
   syncManifestWithRegisteredApps(): void;
   registerApp(app: AppRegistrationInput): RegisteredApp;
-  /** `updates.id` renames the app (route key + manifest key). */
+  /** The id stays (the key); `updates.slug` moves the route. */
   updateApp(id: string, updates: AppUpdateInput): RegisteredApp;
   normalizeAppId(id: string): string;
   deleteApp(id: string): boolean;

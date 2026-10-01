@@ -47,7 +47,10 @@ export type PathChangeHandler = (subPath: string) => void;
 export type AppSourceType = 'remote' | 'package';
 /** Micro-frontend record persisted in `erp_registered_apps`. */
 export interface RegisteredApp {
+    /** The app's key for good — registry, deployment, module, state. Never changes. */
     id: string;
+    /** Its route, `/app/<slug>`; changeable. Absent = the id. Use `superApp.appPath(id)` for links. */
+    slug?: string;
     name: string;
     /** Source of the bundle; absent on records saved before types existed = `remote`. */
     type?: AppSourceType;
@@ -75,6 +78,8 @@ export interface RegisteredApp {
 }
 export interface AppRegistrationInput {
     id: string;
+    /** The route `/app/<slug>`; default the id. */
+    slug?: string;
     name: string;
     /** Default `remote`. */
     type?: AppSourceType;
@@ -86,8 +91,8 @@ export interface AppRegistrationInput {
     icon?: string;
     isEnabled?: boolean;
 }
-/** `id` renames the app (its `/app/<id>` route and manifest key); it is normalised like `registerApp`. */
-export type AppUpdateInput = Partial<Pick<RegisteredApp, 'id' | 'name' | 'type' | 'package' | 'url' | 'description' | 'icon' | 'isEnabled'>>;
+/** The id never changes (it is the key); `slug` moves the route. Normalised like `registerApp`. */
+export type AppUpdateInput = Partial<Pick<RegisteredApp, 'slug' | 'name' | 'type' | 'package' | 'url' | 'description' | 'icon' | 'isEnabled'>>;
 export interface PingResult {
     success: boolean;
     latencyMs: number;

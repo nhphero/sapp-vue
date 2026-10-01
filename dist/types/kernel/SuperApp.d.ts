@@ -107,6 +107,10 @@ export declare class SuperApp implements ISuperApp {
     private getHiddenDefaults;
     normalizeAppId: (id: string) => string;
     updateApp: (id: string, updates: AppUpdateInput) => RegisteredApp;
+    /** A route no other app answers to (as its slug or its id). */
+    private assertSlugFree;
+    findAppByRoute: (key: string) => RegisteredApp | undefined;
+    appPath: (appId: string, subPath?: string) => string;
     deleteApp: (id: string) => boolean;
     pingApp: (targetUrl: string) => Promise<PingResult>;
     isModuleInstalled: (id: string) => boolean;

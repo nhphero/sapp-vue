@@ -1,13 +1,13 @@
-import * as Z from "vue";
-import { reactive as h, inject as ee, provide as te, h as q, defineComponent as z, onUnmounted as re, onMounted as se, triggerRef as ne, shallowRef as oe, defineAsyncComponent as M, markRaw as b, nextTick as ie, watchEffect as ae, watch as G, computed as ce, ref as le, createApp as ue } from "vue";
-import * as de from "pinia";
-import { createPinia as ge } from "pinia";
-import * as fe from "vue-router";
-import { RouterView as pe, createRouter as he, createWebHistory as me } from "vue-router";
-import * as ye from "@vueuse/core";
-import { useLocalStorage as H } from "@vueuse/core";
-import { S as $, R as P, H as O, A as Se, a as U, f as V, b as we, c as L, E as w, M as K } from "./format-BUIIBrkU.js";
-import N from "axios";
+import * as X from "vue";
+import { reactive as h, inject as Z, provide as ee, h as W, defineComponent as z, onUnmounted as te, onMounted as re, triggerRef as se, shallowRef as ne, defineAsyncComponent as U, markRaw as b, nextTick as oe, watchEffect as ie, watch as q, computed as ae, ref as ce, createApp as le } from "vue";
+import * as ue from "pinia";
+import { createPinia as de } from "pinia";
+import * as ge from "vue-router";
+import { RouterView as pe, createRouter as fe, createWebHistory as he } from "vue-router";
+import * as me from "@vueuse/core";
+import { useLocalStorage as G } from "@vueuse/core";
+import { S as $, R, H as ye, A as Se, a as M, f as V, b as we, c as O, E as w, M as H } from "./format-BUIIBrkU.js";
+import L from "axios";
 function ke() {
   const i = h({
     user: null,
@@ -67,7 +67,7 @@ function ke() {
     }
   });
 }
-const B = {};
+const N = {};
 class Ae {
   modules = /* @__PURE__ */ new Map();
   components = /* @__PURE__ */ new Map();
@@ -180,23 +180,23 @@ class Ae {
    * Exposing Vue's reactive core to MFEs to ensure a single unified runtime.
    */
   $vue = {
-    ref: le,
+    ref: ce,
     reactive: h,
-    computed: ce,
-    watch: G,
-    watchEffect: ae,
-    nextTick: ie,
+    computed: ae,
+    watch: q,
+    watchEffect: ie,
+    nextTick: oe,
     markRaw: b,
-    defineAsyncComponent: M,
-    shallowRef: oe,
-    triggerRef: ne,
-    onMounted: se,
-    onUnmounted: re,
+    defineAsyncComponent: U,
+    shallowRef: ne,
+    triggerRef: se,
+    onMounted: re,
+    onUnmounted: te,
     defineComponent: z,
-    h: q,
-    provide: te,
-    inject: ee,
-    useLocalStorage: H
+    h: W,
+    provide: ee,
+    inject: Z,
+    useLocalStorage: G
   };
   init = (e) => {
     console.log("🚀 [sys-kernel] SuperApp Platform Kernel Initializing..."), this.$app = e.app, this.$router = e.router, this.$api = e.api, this.$config = e.config ? h({ ...e.config }) : null, this.$theme = e.theme, this.$message = e.message, this.$dialog = e.dialog, this.state.isInitializing = !1, this.syncManifestWithRegisteredApps();
@@ -232,6 +232,7 @@ class Ae {
       const o = await s.json();
       this.state.serverApps = o.map((n) => ({
         id: n.appId,
+        slug: n.slug || n.appId,
         name: n.title || n.appId,
         type: "package",
         package: n.package,
@@ -301,7 +302,7 @@ class Ae {
     return s || (s = fetch(r, { cache: "no-cache" }).then((o) => o.ok && (o.headers.get("content-type") ?? "").includes("json") ? o.json() : null).catch(() => null), this.manifestCache.set(r, s)), s;
   };
   getDefaultApps = () => {
-    const e = (this.state.discovery?.["admin.url"] || B?.VITE_ADMIN_URL || "http://localhost:4403").replace(/\/+$/, ""), t = (this.state.discovery?.["workspace.url"] || B?.VITE_WORKSPACE_URL || "http://localhost:4409").replace(/\/+$/, ""), r = [
+    const e = (this.state.discovery?.["admin.url"] || N?.VITE_ADMIN_URL || "http://localhost:4403").replace(/\/+$/, ""), t = (this.state.discovery?.["workspace.url"] || N?.VITE_WORKSPACE_URL || "http://localhost:4409").replace(/\/+$/, ""), r = [
       ...this.state.serverApps,
       ...this.getConfiguredApps(),
       {
@@ -369,9 +370,9 @@ class Ae {
   };
   getRegisteredApps = () => {
     try {
-      const e = localStorage.getItem(P), t = this.getDefaultApps();
+      const e = localStorage.getItem(R), t = this.getDefaultApps();
       if (!e)
-        return localStorage.setItem(P, JSON.stringify(t)), t;
+        return localStorage.setItem(R, JSON.stringify(t)), t;
       const r = JSON.parse(e);
       if (!Array.isArray(r)) return t;
       const s = this.getHiddenDefaults();
@@ -415,8 +416,11 @@ class Ae {
     if (!t) throw new Error("Application ID is required");
     const r = e.type === "package" ? "package" : "remote";
     if (r === "remote" && !e.url) throw new Error("Application Remote URL is required");
-    const s = this.getRegisteredApps(), o = r === "package" ? this.getApiBaseUrl() : e.url.trim().replace(/\/+$/, ""), n = this.resolveAppEntry({ id: t, url: o, type: r }), a = s.findIndex((l) => l.id === t), c = {
+    const s = this.getRegisteredApps(), o = r === "package" ? this.getApiBaseUrl() : e.url.trim().replace(/\/+$/, ""), n = this.resolveAppEntry({ id: t, url: o, type: r }), a = s.findIndex((u) => u.id === t), c = this.normalizeAppId(e.slug ?? "") || t;
+    this.assertSlugFree(s, t, c);
+    const l = {
       id: t,
+      slug: c,
       name: e.name || t,
       type: r,
       ...r === "package" && e.package ? { package: e.package } : {},
@@ -428,37 +432,41 @@ class Ae {
       isSystem: a >= 0 ? !!s[a].isSystem : !1,
       updatedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
-    return a >= 0 ? s[a] = { ...s[a], ...c } : s.push(c), localStorage.setItem(P, JSON.stringify(s)), this.syncManifestWithRegisteredApps(), this.emit($.APPS_UPDATED, s), c;
+    return a >= 0 ? s[a] = { ...s[a], ...l } : s.push(l), localStorage.setItem(R, JSON.stringify(s)), this.syncManifestWithRegisteredApps(), this.emit($.APPS_UPDATED, s), l;
   };
   getHiddenDefaults = () => {
     try {
-      return new Set(JSON.parse(localStorage.getItem(O) || "[]"));
+      return new Set(JSON.parse(localStorage.getItem(ye) || "[]"));
     } catch {
       return /* @__PURE__ */ new Set();
     }
   };
   normalizeAppId = (e) => (e || "").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/^-+|-+$/g, "");
   updateApp = (e, t) => {
-    const r = this.getRegisteredApps(), s = r.findIndex((l) => l.id === e);
+    const r = this.getRegisteredApps(), s = r.findIndex((c) => c.id === e);
     if (s === -1) throw new Error(`App [${e}] not found`);
     const o = r[s], n = { ...t };
-    n.url && (n.url = n.url.trim().replace(/\/+$/, ""));
-    const a = n.id !== void 0 ? this.normalizeAppId(n.id) : e;
-    if (n.id !== void 0 && !a) throw new Error("Application ID is required");
-    if (a !== e) {
-      if (r.some((l) => l.id === a)) throw new Error(`App [${a}] already exists`);
-      if (this.$config?.moduleManifest && delete this.$config.moduleManifest[e], o.isSystem) {
-        const l = this.getHiddenDefaults();
-        l.add(e), localStorage.setItem(O, JSON.stringify([...l]));
-      }
-      this.state.installedModules.delete(e), console.log(`🔁 [sys-kernel] App renamed: ${e} -> ${a}`);
-    }
-    n.id = a;
-    const c = { ...o, ...n, updatedAt: (/* @__PURE__ */ new Date()).toISOString() };
-    if (c.type === "package")
-      c.url = this.getApiBaseUrl();
-    else if (delete c.package, !c.url) throw new Error("Application Remote URL is required");
-    return c.entryUrl = this.resolveAppEntry(c), r[s] = c, localStorage.setItem(P, JSON.stringify(r)), this.syncManifestWithRegisteredApps(), this.emit($.APPS_UPDATED, r), r[s];
+    if (n.url && (n.url = n.url.trim().replace(/\/+$/, "")), t.id !== void 0 && this.normalizeAppId(t.id) !== e)
+      throw new Error(`The id of [${e}] cannot change — change its slug (route) instead.`);
+    delete n.id, n.slug !== void 0 && (n.slug = this.normalizeAppId(n.slug) || e, this.assertSlugFree(r, e, n.slug), n.slug !== (o.slug || e) && console.log(`🔁 [sys-kernel] App ${e}: route /app/${o.slug || e} -> /app/${n.slug}`));
+    const a = { ...o, ...n, updatedAt: (/* @__PURE__ */ new Date()).toISOString() };
+    if (a.type === "package")
+      a.url = this.getApiBaseUrl();
+    else if (delete a.package, !a.url) throw new Error("Application Remote URL is required");
+    return a.entryUrl = this.resolveAppEntry(a), r[s] = a, localStorage.setItem(R, JSON.stringify(r)), this.syncManifestWithRegisteredApps(), this.emit($.APPS_UPDATED, r), r[s];
+  };
+  /** A route no other app answers to (as its slug or its id). */
+  assertSlugFree = (e, t, r) => {
+    const s = e.find((o) => o.id !== t && ((o.slug || o.id) === r || o.id === r));
+    if (s) throw new Error(`The route /app/${r} is taken by [${s.id}]`);
+  };
+  findAppByRoute = (e) => {
+    const t = this.getRegisteredApps();
+    return t.find((r) => (r.slug || r.id) === e) ?? t.find((r) => r.id === e);
+  };
+  appPath = (e, t = "") => {
+    const r = this.getRegisteredApps().find((o) => o.id === e), s = t.replace(/^\/+/, "");
+    return `/app/${r?.slug || e}${s ? `/${s}` : ""}`;
   };
   deleteApp = (e) => {
     const t = this.getRegisteredApps(), r = t.find((o) => o.id === e);
@@ -466,7 +474,7 @@ class Ae {
     if (r.isSystem)
       throw new Error(`System application [${e}] cannot be removed.`);
     const s = t.filter((o) => o.id !== e);
-    return localStorage.setItem(P, JSON.stringify(s)), this.$config?.moduleManifest && delete this.$config.moduleManifest[e], this.emit($.APPS_UPDATED, s), !0;
+    return localStorage.setItem(R, JSON.stringify(s)), this.$config?.moduleManifest && delete this.$config.moduleManifest[e], this.emit($.APPS_UPDATED, s), !0;
   };
   pingApp = async (e) => {
     const t = Date.now();
@@ -516,7 +524,7 @@ class Ae {
         if (this.cssScopes.set(e, String(o.__sappCssScope ?? n?.id ?? e)), n?.install) {
           console.log(`🛠️ [sys-kernel] Installing remote [${e}]...`);
           const a = this.getRegisteredApps().find((c) => c.id === e) ?? null;
-          await this.install(n, { moduleId: e, basePath: `/app/${e}`, app: a }), this.markModuleInstalled(e), console.log(`✅ [sys-kernel] Remote [${e}] installed successfully.`);
+          await this.install(n, { moduleId: e, basePath: this.appPath(e), app: a }), this.markModuleInstalled(e), console.log(`✅ [sys-kernel] Remote [${e}] installed successfully.`);
         }
       } catch (o) {
         throw console.error(`🚨 [sys-kernel] Failed to load remote [${e}] from ${s}`, o), o;
@@ -543,7 +551,7 @@ class Ae {
   };
   getModuleEntry = (e) => {
     const t = this.modules.get(e);
-    return typeof t == "function" ? b(M(t)) : t ? b(t) : null;
+    return typeof t == "function" ? b(U(t)) : t ? b(t) : null;
   };
   // --- 🧩 COMPONENT REGISTRY ---
   registerComponent = (e) => {
@@ -556,7 +564,7 @@ class Ae {
     if (!t)
       return console.warn(`⚠️ [sys-kernel] Component not found: ${e}`), null;
     let r;
-    return typeof t == "function" ? r = b(M(t)) : r = b(t), this.componentCache.set(e, r), r;
+    return typeof t == "function" ? r = b(U(t)) : r = b(t), this.componentCache.set(e, r), r;
   };
   skills = h([]);
   commands = h([]);
@@ -606,12 +614,12 @@ class $e {
     this.superApp = e;
   }
   getHeaders() {
-    const e = localStorage.getItem(Se), t = this.superApp?.$appState?.current_workspace || localStorage.getItem(U), r = `req-${Date.now()}-${Math.floor(Math.random() * 1e4)}`, s = {
+    const e = localStorage.getItem(Se), t = this.superApp?.$appState?.current_workspace || localStorage.getItem(M), r = `req-${Date.now()}-${Math.floor(Math.random() * 1e4)}`, s = {
       Authorization: e ? `Bearer ${e}` : "",
       "Content-Type": "application/json",
       "request-id": r
     };
-    return t && (s["x-workspace-id"] = t, localStorage.getItem(U) !== String(t) && localStorage.setItem(U, String(t))), s;
+    return t && (s["x-workspace-id"] = t, localStorage.getItem(M) !== String(t) && localStorage.setItem(M, String(t))), s;
   }
   async request(e, t = {}) {
     try {
@@ -765,8 +773,8 @@ class be {
     return this.initialized;
   }
 }
-const Pe = new be(), Re = () => {
-  const i = H(we, {
+const Re = new be(), Pe = () => {
+  const i = G(we, {
     current_app: "workspace",
     current_workspace: null
   });
@@ -811,12 +819,12 @@ function Ce(i) {
     cause: i
   };
 }
-function Me(i) {
+function Ue(i) {
   return function(t) {
     const { baseURL: r, headers: s, withToken: o = !0, workspace: n = !1, onError: a, setup: c, ...l } = t;
     if (!r)
       throw new Error("[createApi] `baseURL` is required — read it from env (e.g. import.meta.env.VITE_API_URL).");
-    const u = N.create({
+    const u = L.create({
       timeout: _e,
       ...l,
       baseURL: r,
@@ -835,7 +843,7 @@ function Me(i) {
     }), u.interceptors.response.use(
       (d) => d,
       (d) => {
-        if (N.isCancel(d))
+        if (L.isCancel(d))
           return Promise.reject(d);
         const g = Ce(d);
         return a ? a(g) : i.message?.error(g.message), Promise.reject(g);
@@ -843,7 +851,7 @@ function Me(i) {
     ), c?.(u), u;
   };
 }
-const Ue = {
+const Me = {
   en: {
     common: {
       ok: "OK",
@@ -956,10 +964,10 @@ const Ue = {
       fontsWeb: "Web (đủ dấu tiếng Việt)"
     }
   }
-}, Y = (i, e = "", t = {}) => {
+}, K = (i, e = "", t = {}) => {
   for (const [r, s] of Object.entries(i)) {
     const o = e ? `${e}.${r}` : r;
-    s && typeof s == "object" ? Y(s, o, t) : t[o] = String(s);
+    s && typeof s == "object" ? K(s, o, t) : t[o] = String(s);
   }
   return t;
 }, Ie = (i, e) => e ? i.replace(/\{(\w+)\}/g, (t, r) => e[r] === void 0 || e[r] === null ? t : String(e[r])) : i, De = (i, e) => {
@@ -972,17 +980,17 @@ const Ue = {
 function Oe(i = {}) {
   const e = i.fallbackLocale ?? "en", t = i.persist ?? !0, r = t ? (() => {
     try {
-      return localStorage.getItem(L);
+      return localStorage.getItem(O);
     } catch {
       return null;
     }
   })() : null, s = h({ locale: r || i.locale || e, messages: {} }), o = /* @__PURE__ */ new Set(), n = (u, d, g) => {
-    const E = Y(d, g || "");
+    const E = K(d, g || "");
     s.messages[u] = { ...s.messages[u] ?? {}, ...E };
   }, a = (u, d) => {
     for (const [g, E] of Object.entries(u)) n(g, E, d);
   };
-  a(Ue), i.messages && a(i.messages);
+  a(Me), i.messages && a(i.messages);
   const c = (u, d) => s.messages[d]?.[u], l = {
     get locale() {
       return s.locale;
@@ -1006,7 +1014,7 @@ function Oe(i = {}) {
       const d = s.locale;
       if (s.locale = u, t)
         try {
-          localStorage.setItem(L, u);
+          localStorage.setItem(O, u);
         } catch {
         }
       document.documentElement.setAttribute("lang", u), o.forEach((g) => g(u, d));
@@ -1020,21 +1028,21 @@ function Oe(i = {}) {
       return o.add(u), () => o.delete(u);
     }
   };
-  return typeof document < "u" && document.documentElement.setAttribute("lang", s.locale), G(() => s.locale, () => {
+  return typeof document < "u" && document.documentElement.setAttribute("lang", s.locale), q(() => s.locale, () => {
   }), l;
 }
 function k(i) {
   return i === "vi" ? "vi-VN" : i === "en" ? "en-US" : i;
 }
-const j = /* @__PURE__ */ new Map();
+const B = /* @__PURE__ */ new Map();
 function A(i, e) {
-  const t = j.get(i);
+  const t = B.get(i);
   if (t)
     return t;
   const r = e();
-  return j.set(i, r), r;
+  return B.set(i, r), r;
 }
-function R(i) {
+function P(i) {
   if (i == null || i === "")
     return null;
   const e = i instanceof Date ? i : new Date(i);
@@ -1047,7 +1055,7 @@ const Le = [
   { unit: "hour", ms: 36e5 },
   { unit: "minute", ms: 6e4 },
   { unit: "second", ms: 1e3 }
-], F = ["B", "KB", "MB", "GB", "TB", "PB"], Ne = /* @__PURE__ */ new Set([
+], j = ["B", "KB", "MB", "GB", "TB", "PB"], Ne = /* @__PURE__ */ new Set([
   "locale",
   "currency",
   "withLocale",
@@ -1066,7 +1074,7 @@ const Le = [
 function Be() {
   return { groups: /* @__PURE__ */ new Map(), owners: /* @__PURE__ */ new Map() };
 }
-function J(i, e = {}) {
+function Y(i, e = {}) {
   const t = e.fallbackLocale ?? "vi";
   let r = e.currency ?? "VND";
   const s = e.registry ?? Be(), o = {
@@ -1107,7 +1115,7 @@ function J(i, e = {}) {
       })).format(n);
     },
     formatDate(n) {
-      const a = R(n);
+      const a = P(n);
       if (!a)
         return w;
       const c = k(o.locale);
@@ -1118,7 +1126,7 @@ function J(i, e = {}) {
       })).format(a);
     },
     formatDateTime(n) {
-      const a = R(n);
+      const a = P(n);
       if (!a)
         return w;
       const c = k(o.locale);
@@ -1131,7 +1139,7 @@ function J(i, e = {}) {
       })).format(a);
     },
     formatTime(n) {
-      const a = R(n);
+      const a = P(n);
       if (!a)
         return w;
       const c = k(o.locale);
@@ -1141,7 +1149,7 @@ function J(i, e = {}) {
       })).format(a);
     },
     formatRelative(n) {
-      const a = R(n);
+      const a = P(n);
       if (!a)
         return w;
       const c = k(o.locale), l = A(`relative:${c}`, () => new Intl.RelativeTimeFormat(c, {
@@ -1156,13 +1164,13 @@ function J(i, e = {}) {
       if (n == null || !Number.isFinite(n))
         return w;
       let c = Math.abs(n), l = 0;
-      for (; c >= 1024 && l < F.length - 1; )
+      for (; c >= 1024 && l < j.length - 1; )
         c = c / 1024, l = l + 1;
       const u = n < 0 ? "-" : "", d = l === 0 ? 0 : a;
-      return `${u}${o.formatNumber(c, d)} ${F[l]}`;
+      return `${u}${o.formatNumber(c, d)} ${j[l]}`;
     },
     withLocale(n) {
-      return J(() => n, { fallbackLocale: t, currency: r, registry: s });
+      return Y(() => n, { fallbackLocale: t, currency: r, registry: s });
     },
     register(n, a) {
       if (!n)
@@ -1214,58 +1222,58 @@ function J(i, e = {}) {
   });
 }
 function je(i, e = {}) {
-  return J(() => i.locale, e);
+  return Y(() => i.locale, e);
 }
 function Fe(i) {
-  return globalThis[K] = i, i;
+  return globalThis[H] = i, i;
 }
 function Qe() {
-  return globalThis[K];
+  return globalThis[H];
 }
-const xe = {}, x = "Root", We = xe ?? {}, qe = (i) => i || We.VITE_MASTER_API_URL || (window.location.hostname === "localhost" ? "http://localhost:4400" : ""), ze = () => {
+const xe = {}, F = "Root", We = xe ?? {}, ze = (i) => i || We.VITE_MASTER_API_URL || (window.location.hostname === "localhost" ? "http://localhost:4400" : ""), qe = () => {
   const i = window.location.protocol === "https:" ? "wss:" : "ws:", e = window.location.host.replace(":4401", ":4400");
   return `${i}//${e}/socket`;
-}, W = (i, e) => async () => {
+}, x = (i, e) => async () => {
   const t = i.getComponent(e);
   if (!t) throw new Error(`[sapp] Route component not registered: ${e}`);
   return typeof t == "function" ? t() : t;
 };
 async function Xe(i) {
-  Fe({ Vue: Z, Pinia: de, VueRouter: fe, VueUse: ye });
-  const e = ue(i.root), t = ge();
+  Fe({ Vue: X, Pinia: ue, VueRouter: ge, VueUse: me });
+  const e = le(i.root), t = de();
   e.use(t);
-  const r = i.discovery ?? Pe;
+  const r = i.discovery ?? Re;
   await r.initialize();
-  const s = i.api?.baseUrl ?? qe(r.get("master_api_url"));
+  const s = i.api?.baseUrl ?? ze(r.get("master_api_url"));
   console.log("💉 [sapp] apiBase:", s);
   const o = new Ae();
   o.$app = e, window.$superApp = o;
   const n = i.theme.register(e, o), a = n.uiStore, c = Oe(i.i18n), l = je(c, { currency: i.currency });
-  o.registerProtocol("i18n", c), c.onLocaleChange((p, y) => o.emit("i18n:locale-changed", { locale: p, previous: y }));
-  const u = new $e(s), d = new Ee(i.socket?.url ?? ze());
+  o.registerProtocol("i18n", c), c.onLocaleChange((f, y) => o.emit("i18n:locale-changed", { locale: f, previous: y }));
+  const u = new $e(s), d = new Ee(i.socket?.url ?? qe());
   d.connect(), o.registerProtocol("api", u), o.registerProtocol("socket", d), u.bind(o);
   const g = i.auth?.tokenKey ?? "accessToken";
-  o.createApi = Me({
+  o.createApi = Ue({
     tokenKey: g,
     message: n.messageService,
     appState: () => o.$appState
   });
-  const E = i.auth?.loginPath ?? "/login", Q = i.layout ?? z({ name: "SappLayout", setup: () => () => q(pe) }), X = [
-    { path: E, name: "Login", component: W(o, i.auth?.loginComponentId ?? "auth.login"), meta: { public: !0 } },
+  const E = i.auth?.loginPath ?? "/login", J = i.layout ?? z({ name: "SappLayout", setup: () => () => W(pe) }), Q = [
+    { path: E, name: "Login", component: x(o, i.auth?.loginComponentId ?? "auth.login"), meta: { public: !0 } },
     {
       path: "/",
-      name: x,
-      component: Q,
+      name: F,
+      component: J,
       children: [
-        { path: "app/:moduleId(.*)*", name: "AppGateway", component: W(o, "layout.app-container") }
+        { path: "app/:moduleId(.*)*", name: "AppGateway", component: x(o, "layout.app-container") }
       ]
     },
     ...i.routes ?? []
-  ], v = he({ history: me(i.router?.base), routes: X });
-  v.beforeEach((p, y, f) => {
+  ], v = fe({ history: he(i.router?.base), routes: Q });
+  v.beforeEach((f, y, p) => {
     const S = localStorage.getItem(g);
-    if (!p.meta.public && !S) return f(E);
-    f();
+    if (!f.meta.public && !S) return p(E);
+    p();
   });
   const _ = { app: e, router: v, pinia: t, superApp: o, discovery: r, api: u, socket: d };
   if (await i.modules?.(_), o.state.discovery = r.getAll(), o.init({
@@ -1276,54 +1284,54 @@ async function Xe(i) {
     message: n.messageService,
     dialog: n.dialogService
   }), await o.loadServerApps(), i.branding) {
-    const { name: p, icon: y, logo: f } = i.branding;
-    p && (document.title = p);
-    const S = y || f;
+    const { name: f, icon: y, logo: p } = i.branding;
+    f && (document.title = f);
+    const S = y || p;
     if (S) {
       const C = document.querySelector('link[rel~="icon"]') ?? Object.assign(document.createElement("link"), { rel: "icon" });
       C.href = S, C.parentNode || document.head.appendChild(C);
     }
   }
   await o.loadPlatformConfig();
-  const T = n.appState ?? Re(), D = r.get("system.workspaces");
+  const T = n.appState ?? Pe(), D = r.get("system.workspaces");
   D && (T.workspaces = D), o.$appState = T, e.config.globalProperties.$appState = T, e.config.globalProperties.$auth = o.$authState, e.provide("$auth", o.$authState);
-  for (const p of i.features ?? []) {
+  for (const f of i.features ?? []) {
     const y = {
       ..._,
-      featureId: p.id,
-      registerRoute: (f) => v.addRoute(x, f),
-      registerTopRoute: (f) => v.addRoute(f),
-      registerComponent: (f) => o.registerComponent(f),
-      registerSkill: (f) => o.registerSkill(f),
-      registerCommand: (f) => o.registerCommand(f),
-      registerMessages: (f, S) => c.addMessages(f, S),
-      provide: (f, S) => e.provide(f, S)
+      featureId: f.id,
+      registerRoute: (p) => v.addRoute(F, p),
+      registerTopRoute: (p) => v.addRoute(p),
+      registerComponent: (p) => o.registerComponent(p),
+      registerSkill: (p) => o.registerSkill(p),
+      registerCommand: (p) => o.registerCommand(p),
+      registerMessages: (p, S) => c.addMessages(p, S),
+      provide: (p, S) => e.provide(p, S)
     };
-    await p.install(y), console.log(`🧩 [sapp] Shell feature installed: ${p.id}`);
+    await f.install(y), console.log(`🧩 [sapp] Shell feature installed: ${f.id}`);
   }
   const m = e.config.globalProperties;
-  return m.$c = (p) => o.getComponent(p), m.$s = o, m.$superApp = o, m.$message = n.messageService, m.$dialog = n.dialogService, m.$i18n = c, m.$t = (p, y) => c.t(p, y), m.$f = l, o.$f = l, e.provide("$i18n", c), e.provide("$f", l), e.provide("ui-store", a), e.provide("$theme", i.tokens), e.provide("$superApp", o), e.provide("$s", o), e.provide("$message", n.messageService), e.provide("$dialog", n.dialogService), {
+  return m.$c = (f) => o.getComponent(f), m.$s = o, m.$superApp = o, m.$message = n.messageService, m.$dialog = n.dialogService, m.$i18n = c, m.$t = (f, y) => c.t(f, y), m.$f = l, o.$f = l, e.provide("$i18n", c), e.provide("$f", l), e.provide("ui-store", a), e.provide("$theme", i.tokens), e.provide("$superApp", o), e.provide("$s", o), e.provide("$message", n.messageService), e.provide("$dialog", n.dialogService), {
     ..._,
-    mount(p = "#app") {
-      return e.use(v), e.mount(p), e;
+    mount(f = "#app") {
+      return e.use(v), e.mount(f), e;
     }
   };
 }
 export {
   $e as A,
-  Ue as B,
+  Me as B,
   be as D,
   Ee as S,
   Ae as a,
-  Me as b,
+  Ue as b,
   Xe as c,
-  Re as d,
+  Pe as d,
   ke as e,
-  J as f,
+  Y as f,
   je as g,
   Oe as h,
-  Pe as i,
+  Re as i,
   Qe as j,
   Fe as k
 };
-//# sourceMappingURL=createSapp-D5c3vNdq.js.map
+//# sourceMappingURL=createSapp-BrB1ILFd.js.map

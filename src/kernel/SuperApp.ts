@@ -289,9 +289,10 @@ export class SuperApp implements ISuperApp {
       const res = await fetch(`${this.getPackageFilesBaseUrl()}/apps.json`, { cache: 'no-cache', signal: controller.signal });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const list: Array<{ appId: string; package: string; version: string; channel?: 'stable' | null; title?: string; description?: string; icon?: string }> = await res.json();
+      const list: Array<{ appId: string; slug?: string; package: string; version: string; channel?: 'stable' | null; title?: string; description?: string; icon?: string }> = await res.json();
       this.state.serverApps = list.map((app): RegisteredApp => ({
         id: app.appId,
+        slug: app.slug || app.appId,
         name: app.title || app.appId,
         type: 'package',
         package: app.package,
@@ -551,9 +552,12 @@ export class SuperApp implements ISuperApp {
     const url = type === 'package' ? this.getApiBaseUrl() : (appData.url as string).trim().replace(/\/+$/, '');
     const entryUrl = this.resolveAppEntry({ id: rawId, url, type });
     const existingIndex = apps.findIndex(a => a.id === rawId);
+    const slug = this.normalizeAppId(appData.slug ?? '') || rawId;
+    this.assertSlugFree(apps, rawId, slug);
 
     const newApp: RegisteredApp = {
       id: rawId,
+      slug,
       name: appData.name || rawId,
       type,
       ...(type === 'package' && appData.package ? { package: appData.package } : {}),
@@ -595,20 +599,16 @@ export class SuperApp implements ISuperApp {
       patch.url = patch.url.trim().replace(/\/+$/, '');
     }
 
-    // 🔁 Rename: new slug becomes the route key (/app/<id>) and manifest key
-    const nextId = patch.id !== undefined ? this.normalizeAppId(patch.id) : id;
-    if (patch.id !== undefined && !nextId) throw new Error('Application ID is required');
-    if (nextId !== id) {
-      if (apps.some(a => a.id === nextId)) throw new Error(`App [${nextId}] already exists`);
-      if (this.$config?.moduleManifest) delete this.$config.moduleManifest[id];
-      if (app.isSystem) {
-        const hidden = this.getHiddenDefaults(); hidden.add(id);
-        localStorage.setItem(HIDDEN_DEFAULT_APPS_STORAGE_KEY, JSON.stringify([...hidden]));
-      }
-      this.state.installedModules.delete(id);
-      console.log(`🔁 [sys-kernel] App renamed: ${id} -> ${nextId}`);
+    // The id is the key and stays; the slug — the route — moves.
+    if ((updates as any).id !== undefined && this.normalizeAppId((updates as any).id) !== id) {
+      throw new Error(`The id of [${id}] cannot change — change its slug (route) instead.`);
     }
-    patch.id = nextId;
+    delete (patch as any).id;
+    if (patch.slug !== undefined) {
+      patch.slug = this.normalizeAppId(patch.slug) || id;
+      this.assertSlugFree(apps, id, patch.slug);
+      if (patch.slug !== (app.slug || id)) console.log(`🔁 [sys-kernel] App ${id}: route /app/${app.slug || id} -> /app/${patch.slug}`);
+    }
 
     const merged: RegisteredApp = { ...app, ...patch, updatedAt: new Date().toISOString() };
     if (merged.type === 'package') {
@@ -617,13 +617,30 @@ export class SuperApp implements ISuperApp {
       delete merged.package;
       if (!merged.url) throw new Error('Application Remote URL is required');
     }
-    // The entry follows the type, the URL and the id (a package app's entry is keyed by its id).
+    // The entry follows the type and the URL (a package app's entry is keyed by its id).
     merged.entryUrl = this.resolveAppEntry(merged);
     apps[index] = merged;
     localStorage.setItem(REGISTERED_APPS_STORAGE_KEY, JSON.stringify(apps));
     this.syncManifestWithRegisteredApps();
     this.emit(SUPERAPP_EVENTS.APPS_UPDATED, apps);
     return apps[index];
+  };
+
+  /** A route no other app answers to (as its slug or its id). */
+  private assertSlugFree = (apps: RegisteredApp[], appId: string, slug: string) => {
+    const taken = apps.find(a => a.id !== appId && ((a.slug || a.id) === slug || a.id === slug));
+    if (taken) throw new Error(`The route /app/${slug} is taken by [${taken.id}]`);
+  };
+
+  public findAppByRoute = (key: string): RegisteredApp | undefined => {
+    const apps = this.getRegisteredApps();
+    return apps.find(a => (a.slug || a.id) === key) ?? apps.find(a => a.id === key);
+  };
+
+  public appPath = (appId: string, subPath = ''): string => {
+    const app = this.getRegisteredApps().find(a => a.id === appId);
+    const sub = subPath.replace(/^\/+/, '');
+    return `/app/${app?.slug || appId}${sub ? `/${sub}` : ''}`;
   };
 
   public deleteApp = (id: string): boolean => {
@@ -723,7 +740,7 @@ export class SuperApp implements ISuperApp {
           console.log(`🛠️ [sys-kernel] Installing remote [${moduleId}]...`);
           // Hand the module its Admin registry record so it can honour the configured slug/prefix, name, icon…
           const record = this.getRegisteredApps().find(a => a.id === moduleId) ?? null;
-          await this.install(erpModule, { moduleId, basePath: `/app/${moduleId}`, app: record });
+          await this.install(erpModule, { moduleId, basePath: this.appPath(moduleId), app: record });
           this.markModuleInstalled(moduleId);
           console.log(`✅ [sys-kernel] Remote [${moduleId}] installed successfully.`);
         }

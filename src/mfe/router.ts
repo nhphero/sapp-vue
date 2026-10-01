@@ -48,7 +48,7 @@ const match = (c: Compiled, parts: string[]): Record<string, string> | null => {
 
 /**
  * Minimal router for the sub-path a mini app receives from the Shell
- * (`/app/<moduleId>/<subPath>`). Paths are matched against feature routes;
+ * (`/app/<slug>/<subPath>`; the slug of the app id it is mounted as). Paths are matched against feature routes;
  * navigation is delegated to the Shell's vue-router.
  */
 export function createFeatureRouter(moduleId: string, superApp: ISuperApp): IFeatureRouter {
@@ -57,8 +57,10 @@ export function createFeatureRouter(moduleId: string, superApp: ISuperApp): IFea
   const current: FeatureRouteMatch = reactive({ path: '', route: null, params: {} });
   const mount = reactive({ id: moduleId });
 
+  // The route follows the app's slug (changeable); `mount.id` is its id (the key).
   const href = (subPath: string) => {
     const p = normalize(subPath);
+    if (typeof superApp.appPath === 'function') return superApp.appPath(mount.id, p);
     return p ? `/app/${mount.id}/${p}` : `/app/${mount.id}`;
   };
 
