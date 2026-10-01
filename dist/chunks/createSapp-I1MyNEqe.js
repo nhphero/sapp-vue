@@ -764,7 +764,7 @@ class be {
     r.push(t), this.handlers.set(e, r);
   }
 }
-const Re = {}, _e = ["master_api_url"], Pe = (o) => o.master_api_url || Re?.VITE_MASTER_API_URL || (typeof window < "u" && window.location.hostname === "localhost" ? "http://localhost:4400" : "");
+const Re = {}, _e = ["master_api_url"], Pe = (o) => o.master_api_url || Re?.VITE_MASTER_API_URL || (typeof window < "u" && window.location.hostname === "localhost" ? "http://localhost:4400/api" : "/api");
 async function I(o) {
   const e = new AbortController(), t = setTimeout(() => e.abort(), 5e3);
   try {
@@ -1282,7 +1282,7 @@ function Ge(o) {
 function tt() {
   return globalThis[H];
 }
-const Ve = {}, x = "Root", We = Ve ?? {}, Ke = (o) => o || We.VITE_MASTER_API_URL || (window.location.hostname === "localhost" ? "http://localhost:4400" : ""), He = () => {
+const Ve = {}, x = "Root", We = Ve ?? {}, Ke = (o) => o || We.VITE_MASTER_API_URL || (window.location.hostname === "localhost" ? "http://localhost:4400/api" : "/api"), He = () => {
   const o = window.location.protocol === "https:" ? "wss:" : "ws:", e = window.location.host.replace(":4401", ":4400");
   return `${o}//${e}/socket`;
 }, q = (o, e) => async () => {
@@ -1387,4 +1387,4 @@ export {
   tt as j,
   Ge as k
 };
-//# sourceMappingURL=createSapp-CpmVgwPs.js.map
+//# sourceMappingURL=createSapp-I1MyNEqe.js.map

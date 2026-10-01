@@ -20,9 +20,12 @@ export type { SystemConfig };
 /** Keys the environment never overrides: how the Shell finds the backend. */
 const LOCAL_ONLY = ['master_api_url'];
 
-/** The backend: config.json's `master_api_url`, else the build's, else :4400 on a local dev host. */
+/**
+ * The backend API (every route under `/api`): config.json's `master_api_url`, else the build's, else
+ * :4400/api on a local dev host, else `/api` on this origin (a Shell the backend serves itself).
+ */
 const resolveApiBase = (staticConfig: any): string =>
-  staticConfig.master_api_url || (import.meta as any).env?.VITE_MASTER_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:4400' : '');
+  staticConfig.master_api_url || (import.meta as any).env?.VITE_MASTER_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:4400/api' : '/api');
 
 async function fetchJson(url: string): Promise<any | null> {
   const controller = new AbortController();

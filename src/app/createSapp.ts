@@ -20,7 +20,7 @@ const ROOT_ROUTE = 'Root';
 const env = (import.meta as any).env ?? {};
 
 const resolveApiBase = (discovered?: string) =>
-  discovered || env.VITE_MASTER_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:4400' : '');
+  discovered || env.VITE_MASTER_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:4400/api' : '/api');
 
 /** Dev shell on :4401 talks to the backend on :4400; otherwise same host. */
 const resolveSocketUrl = () => {
