@@ -123,6 +123,8 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
     theme: options.tokens,
     message: services.messageService, dialog: services.dialogService,
   });
+  // Local apps the backend serves (mini app packages) join the registry without manual registration.
+  await superApp.loadServerApps();
 
   // 7b. Branding → favicon + title
   if (options.branding) {

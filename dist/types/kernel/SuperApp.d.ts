@@ -78,6 +78,9 @@ export declare class SuperApp implements ISuperApp {
     getApiBaseUrl: () => string;
     packageEntryUrl: (appId: string) => string;
     resolveAppEntry: (app: Pick<RegisteredApp, "id" | "url" | "type">) => string;
+    /** True once `/packages/apps.json` answered — only then may stale server apps be dropped. */
+    private serverAppsLoaded;
+    loadServerApps: () => Promise<RegisteredApp[]>;
     private getDefaultApps;
     /**
      * Apps declared by the Shell's config (`config.json` / discovery) under `registry.apps`:

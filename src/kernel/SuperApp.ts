@@ -57,6 +57,7 @@ export class SuperApp implements ISuperApp {
     installedModules: new Set<string>(),
     moduleStates: {} as Record<string, any>, // 🧠 Centralized Mini-App State
     discovery: {} as Record<string, any>, // 🛰️ System discovery parameters
+    serverApps: [] as RegisteredApp[], // 📦 Local apps served by the backend's package registry
   });
 
   private loadingPromises: Map<string, Promise<void>> = new Map();
@@ -257,12 +258,49 @@ export class SuperApp implements ISuperApp {
   public resolveAppEntry = (app: Pick<RegisteredApp, 'id' | 'url' | 'type'>): string =>
     app.type === 'package' ? this.packageEntryUrl(app.id) : this.formatAppEntryUrl(app.url);
 
+  /** True once `/packages/apps.json` answered — only then may stale server apps be dropped. */
+  private serverAppsLoaded = false;
+
+  public loadServerApps = async (): Promise<RegisteredApp[]> => {
+    const base = this.getApiBaseUrl();
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(`${base}/packages/apps.json`, { cache: 'no-store', signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const list: Array<{ appId: string; package: string; title?: string; description?: string; icon?: string }> = await res.json();
+      this.state.serverApps = list.map((app): RegisteredApp => ({
+        id: app.appId,
+        name: app.title || app.appId,
+        type: 'package',
+        package: app.package,
+        url: base,
+        entryUrl: this.packageEntryUrl(app.appId),
+        description: app.description || '',
+        icon: app.icon || 'Package',
+        isSystem: true,
+        isEnabled: true,
+        managedBy: 'server',
+        updatedAt: new Date().toISOString(),
+      }));
+      this.serverAppsLoaded = true;
+    } catch (err: any) {
+      console.warn(`📦 [sys-kernel] Server apps unavailable (${err?.message ?? err}) — registry unchanged.`);
+      return this.state.serverApps;
+    }
+    this.syncManifestWithRegisteredApps();
+    this.emit(SUPERAPP_EVENTS.APPS_UPDATED, this.getRegisteredApps());
+    return this.state.serverApps;
+  };
+
   private getDefaultApps = (): RegisteredApp[] => {
     const isDev = (import.meta as any).env?.DEV ?? true;
     const adminBase = (this.state.discovery?.['admin.url'] || (import.meta as any).env?.VITE_ADMIN_URL || 'http://localhost:4403').replace(/\/+$/, '');
     const workspaceBase = (this.state.discovery?.['workspace.url'] || (import.meta as any).env?.VITE_WORKSPACE_URL || 'http://localhost:4409').replace(/\/+$/, '');
 
-    return [
+    const apps: RegisteredApp[] = [
+      ...this.state.serverApps,
       ...this.getConfiguredApps(),
       {
         id: 'workspace',
@@ -287,6 +325,9 @@ export class SuperApp implements ISuperApp {
         updatedAt: new Date().toISOString()
       }
     ];
+    // One record per id; earlier sources win: server apps, then config.json, then the built-ins.
+    const seen = new Set<string>();
+    return apps.filter(app => !seen.has(app.id) && seen.add(app.id));
   };
 
   /**
@@ -355,6 +396,18 @@ export class SuperApp implements ISuperApp {
           if (!found.entryUrl) found.entryUrl = this.formatAppEntryUrl(found.url);
         }
       });
+      // Server apps: the backend is the source of truth for what they are; ones it no longer has go away.
+      const fromServer = new Map(this.state.serverApps.map(app => [app.id, app]));
+      for (let i = parsed.length - 1; i >= 0; i--) {
+        const app = parsed[i];
+        const server = fromServer.get(app.id);
+        if (server) {
+          const { isEnabled } = app;
+          parsed[i] = { ...app, ...server, isEnabled: isEnabled ?? true };
+        } else if (app.managedBy === 'server' && this.serverAppsLoaded) {
+          parsed.splice(i, 1);
+        }
+      }
       // A package app's entry follows the backend URL, which may differ per environment.
       parsed.forEach(app => {
         if (app.type === 'package') {

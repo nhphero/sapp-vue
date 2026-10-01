@@ -86,6 +86,8 @@ export interface KernelState {
   installedModules: Set<string>;
   moduleStates: Record<string, any>;
   discovery: Record<string, any>;
+  /** Local apps the backend serves (`/packages/apps.json`), loaded by `loadServerApps()`. */
+  serverApps: RegisteredApp[];
 }
 
 /**
@@ -141,6 +143,12 @@ export interface ISuperApp extends ISuperAppCore {
   packageEntryUrl(appId: string): string;
   /** Entry URL for any registered app, by its `type`. */
   resolveAppEntry(app: Pick<RegisteredApp, 'id' | 'url' | 'type'>): string;
+  /**
+   * Load the local apps the backend serves (`<api>/packages/apps.json`) into the registry — every
+   * mini app package gets an app without anyone registering it. Called by createSapp at boot; call
+   * again after deploying. A server that does not answer leaves the registry as it is.
+   */
+  loadServerApps(): Promise<RegisteredApp[]>;
   getRegisteredApps(): RegisteredApp[];
   syncManifestWithRegisteredApps(): void;
   registerApp(app: AppRegistrationInput): RegisteredApp;

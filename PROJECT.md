@@ -98,3 +98,15 @@ Hai package được phân phối qua **GitHub**, không qua npm registry:
 - App ghim package vào **tarball GitHub theo commit** (§2.2 của [`PROJECT.md`](../../PROJECT.md) gốc): `"https://github.com/nhphero/sapp-vue/archive/<commit>.tar.gz"`. Không dùng `github:owner/repo` vì npm "prepare" git dependency có script `build` và đi tìm peer `@nhphero/vue-sapp` trên npmjs (404).
 - Build trong container (`nhphero/erp-node24`): build `vue-sapp` trước, theme sau (devDependency của theme trỏ tới tarball `vue-sapp`), commit + push từng repo, rồi đổi commit trong `package.json` các app (hoặc `sapp update`).
 - Script npm workspace ở root (`build:packages`, `pack:packages`, `publish:packages`) vẫn còn nhưng hiện không dùng để phân phối.
+
+## Application Registry: type `remote` | `package`
+
+`RegisteredApp.type` (contract `contracts/registry.ts`, mặc định `remote` cho bản ghi cũ):
+
+- **`remote`** — app có host riêng; `url` là base, entry = `formatAppEntryUrl(url)` (`/src/index.ts` khi dev, `/index.js` khi prod).
+- **`package`** — bundle do backend phục vụ (`sapp publish` + `package-manager.apps.set`): không cần URL, entry = `packageEntryUrl(id)` = `<api>/packages/<id>/index.js`; `package` lưu tên package (để hiển thị — version do backend quyết định). `url` / `entryUrl` được tính lại mỗi lần đọc registry nên theo đúng backend của môi trường.
+
+Kernel: `getApiBaseUrl()` (discovery `master_api_url`, else base của protocol `api`), `packageEntryUrl(appId)`, `resolveAppEntry(app)`; `registerApp` / `updateApp` tính entry theo type (đổi id thì entry của app package đổi theo). `config.json` `registry.apps` khai báo được app package: `{ "id": "master-data-live", "name": "…", "type": "package", "package": "master-data" }` (không cần `<id>.url`).
+
+Mount một bundle dưới id khác (bundle `master-data` → registry `master-data-live`): `createMiniApp` chỉ nhận `mountId` (+ `aliases`), **không** nhận luôn id gốc của bundle — nên `/app/master-data` vẫn nạp từ nguồn riêng của nó. Component và namespace i18n vẫn theo id gốc của bundle (`master-data.*`): hai nguồn của cùng một bundle trong một phiên dùng chung namespace đó.
+
