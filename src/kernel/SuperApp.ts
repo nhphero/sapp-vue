@@ -289,13 +289,14 @@ export class SuperApp implements ISuperApp {
       const res = await fetch(`${this.getPackageFilesBaseUrl()}/apps.json`, { cache: 'no-cache', signal: controller.signal });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const list: Array<{ appId: string; package: string; version: string; title?: string; description?: string; icon?: string }> = await res.json();
+      const list: Array<{ appId: string; package: string; version: string; channel?: 'stable' | null; title?: string; description?: string; icon?: string }> = await res.json();
       this.state.serverApps = list.map((app): RegisteredApp => ({
         id: app.appId,
         name: app.title || app.appId,
         type: 'package',
         package: app.package,
         version: app.version,
+        channel: app.channel ?? null,
         url: base,
         entryUrl: this.packageFilesEntryUrl(app.package, app.version),
         description: app.description || '',

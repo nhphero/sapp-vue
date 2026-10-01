@@ -236,6 +236,7 @@ class Ae {
         type: "package",
         package: n.package,
         version: n.version,
+        channel: n.channel ?? null,
         url: e,
         entryUrl: this.packageFilesEntryUrl(n.package, n.version),
         description: n.description || "",
@@ -1325,4 +1326,4 @@ export {
   Qe as j,
   Fe as k
 };
-//# sourceMappingURL=createSapp-BPW7yAJK.js.map
+//# sourceMappingURL=createSapp-D5c3vNdq.js.map

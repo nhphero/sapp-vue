@@ -55,6 +55,8 @@ export interface RegisteredApp {
     package?: string;
     /** `package` apps: the deployed version (from the server's `/packages/apps.json`) — the entry points into its files. */
     version?: string;
+    /** `package` apps: `stable` when the app follows its package's stable alias (`version` = what stable names now). */
+    channel?: 'stable' | null;
     /** `server`: created by the backend's package registry (a mini app package), listed from `/packages/apps.json`. */
     managedBy?: 'server';
     /** `remote`: base URL of the remote. `package`: the backend base URL it is served from. */
