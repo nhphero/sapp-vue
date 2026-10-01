@@ -285,7 +285,16 @@ export class SuperApp implements ISuperApp {
    * The app registry (backend sys_apps) from the static `<package files>/registry.json`; a server older
    * than the registry answers `apps.json` (package apps only) instead.
    */
+  /**
+   * The app registry — from `<backend>/discovery.json` (fetched again: call after a change); a backend
+   * older than it: the static registry.json / apps.json.
+   */
   public loadServerApps = async (): Promise<RegisteredApp[]> => {
+    if (await this.refreshDiscovery()) return this.state.serverApps;
+    return this.loadServerAppsFromFiles();
+  };
+
+  private loadServerAppsFromFiles = async (): Promise<RegisteredApp[]> => {
     const fetchJson = async (name: string) => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 4000);
@@ -354,12 +363,29 @@ export class SuperApp implements ISuperApp {
   /** The Shell's runtime config source (set by createSapp): reloads the environment. */
   public discoveryService: IDiscoveryService | null = null;
 
+  /** Fetches `<backend>/discovery.json` again and applies it; false when the backend does not serve it. */
+  private refreshDiscovery = async (): Promise<boolean> => {
+    if (!this.discoveryService?.reload) return false;
+    if (!(await this.discoveryService.reload())) return false;
+    this.applyDiscovery();
+    return true;
+  };
+
   public reloadEnvironment = async (): Promise<void> => {
-    const merged = await this.discoveryService?.reloadEnvironment?.();
-    if (!merged) return;
+    if (!(await this.refreshDiscovery())) await this.loadServerAppsFromFiles();
+  };
+
+  /**
+   * What the discovery service last fetched, applied without a request: the merged config (changed
+   * `<module>.url` entries win in the manifest), Admin → Config, the app registry. Says which of the
+   * two the backend served (createSapp falls back to the older files for the others).
+   */
+  public applyDiscovery = (): { platform: boolean; apps: boolean } => {
+    const source = this.discoveryService;
+    if (!source) return { platform: false, apps: false };
+    const merged = source.getAll();
     const before = this.state.discovery ?? {};
     this.state.discovery = merged;
-    // `<module>.url` entries that changed win over what the manifest had.
     if (this.$config) {
       const manifest = (this.$config.moduleManifest ??= {});
       for (const [key, value] of Object.entries(merged)) {
@@ -368,13 +394,23 @@ export class SuperApp implements ISuperApp {
         }
       }
     }
-    await this.loadServerApps();
+    const platform = source.getPlatform?.();
+    if (platform) this.applyPlatformConfig(platform);
+    const rows = source.getApps?.();
+    if (rows) {
+      this.state.serverApps = rows.filter(row => row?.id).map(row => this.toRegisteredApp(row));
+      this.serverAppsLoaded = true;
+      this.syncManifestWithRegisteredApps();
+      this.emit(SUPERAPP_EVENTS.APPS_UPDATED, this.getRegisteredApps());
+    }
+    return { platform: !!platform, apps: !!rows };
   };
 
   /** Branding given to createSapp, kept so an emptied platform field falls back to it. */
   private shellBranding: BrandingOptions | null = null;
 
   public loadPlatformConfig = async (): Promise<PlatformConfig | null> => {
+    if (await this.refreshDiscovery()) return this.state.platformConfig;
     let config: PlatformConfig;
     try {
       const controller = new AbortController();
@@ -388,6 +424,11 @@ export class SuperApp implements ISuperApp {
       console.warn(`⚙️ [sys-kernel] Platform config unavailable (${err?.message ?? err}) — Shell defaults kept.`);
       return null;
     }
+    return this.applyPlatformConfig(config);
+  };
+
+  /** Admin → Config applied: page title, favicon, the branding the theme shows. */
+  private applyPlatformConfig = (config: PlatformConfig): PlatformConfig => {
     this.state.platformConfig = config;
 
     const general = config.general ?? ({} as PlatformConfig['general']);

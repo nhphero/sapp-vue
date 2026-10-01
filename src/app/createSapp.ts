@@ -134,10 +134,11 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
       link.href = href; if (!link.parentNode) document.head.appendChild(link);
     }
   }
-  // 7b. Platform config (Admin → Config): branding (the environment came with the discovery, step 2)
-  await superApp.loadPlatformConfig();
-  // 7c. The app registry (server): every app joins without per-browser registration.
-  await superApp.loadServerApps();
+  // 7b. Admin → Config and the app registry: they came with the discovery (step 2, one request) —
+  // fetched separately only from a backend older than discovery.json.
+  const served = superApp.applyDiscovery();
+  if (!served.platform) await superApp.loadPlatformConfig();
+  if (!served.apps) await superApp.loadServerApps();
 
   // 8. Global app state (workspaces pre-filled from discovery)
   const appState = services.appState ?? createAppState();

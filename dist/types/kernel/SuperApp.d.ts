@@ -90,17 +90,35 @@ export declare class SuperApp implements ISuperApp {
      * The app registry (backend sys_apps) from the static `<package files>/registry.json`; a server older
      * than the registry answers `apps.json` (package apps only) instead.
      */
+    /**
+     * The app registry — from `<backend>/discovery.json` (fetched again: call after a change); a backend
+     * older than it: the static registry.json / apps.json.
+     */
     loadServerApps: () => Promise<RegisteredApp[]>;
+    private loadServerAppsFromFiles;
     /** Built-in remote URLs per environment: the Shell config's `<id>.url`, else the build's env. */
     private builtInUrl;
     /** A registry row (registry.json / apps.registry.*) as the Shell's record. */
     private toRegisteredApp;
     /** The Shell's runtime config source (set by createSapp): reloads the environment. */
     discoveryService: IDiscoveryService | null;
+    /** Fetches `<backend>/discovery.json` again and applies it; false when the backend does not serve it. */
+    private refreshDiscovery;
     reloadEnvironment: () => Promise<void>;
+    /**
+     * What the discovery service last fetched, applied without a request: the merged config (changed
+     * `<module>.url` entries win in the manifest), Admin → Config, the app registry. Says which of the
+     * two the backend served (createSapp falls back to the older files for the others).
+     */
+    applyDiscovery: () => {
+        platform: boolean;
+        apps: boolean;
+    };
     /** Branding given to createSapp, kept so an emptied platform field falls back to it. */
     private shellBranding;
     loadPlatformConfig: () => Promise<PlatformConfig | null>;
+    /** Admin → Config applied: page title, favicon, the branding the theme shows. */
+    private applyPlatformConfig;
     resolvePackageFileUrl: (pathOrUrl: string) => string;
     private manifestCache;
     loadAppManifest: (appId: string) => Promise<Record<string, any> | null>;

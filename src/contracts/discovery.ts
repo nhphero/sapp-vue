@@ -1,7 +1,7 @@
 /**
  * 🛰️ Discovery Contracts
- * Runtime configuration: the `/system/v1/discovery` endpoint, `/config.json` (static) over it, and the
- * platform environment (`<backend>/environment.json`, Admin → Environment) over both.
+ * Runtime configuration: `/config.json` (this deployment) and `<backend>/discovery.json` (the system
+ * discovery, the environment, Admin → Config, the app registry — one request).
  */
 
 export interface SystemConfig {
@@ -20,6 +20,10 @@ export interface IDiscoveryService {
   initialize(superApp?: { state: { discovery: Record<string, any> } }): Promise<void>;
   get<T = any>(key: string, defaultValue?: T): T;
   getAll(): SystemConfig;
-  /** Fetches the platform environment again and returns the merged config. */
-  reloadEnvironment?(): Promise<SystemConfig>;
+  /** Fetches `<backend>/discovery.json` again; false when the backend does not serve it. */
+  reload?(): Promise<boolean>;
+  /** Admin → Config from the last discovery.json (null: not served). */
+  getPlatform?(): any | null;
+  /** The app registry rows from the last discovery.json (null: not served). */
+  getApps?(): any[] | null;
 }

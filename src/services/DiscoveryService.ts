@@ -1,93 +1,88 @@
 /**
- * 🛰️ Discovery Service
- * Handles fetching dynamic configuration from the SuperApp Registry.
+ * 🛰️ Discovery Service — the Shell's runtime config, in two requests at boot:
+ *
+ * 1. `/config.json` — this deployment's own file: where the backend is (`master_api_url`) and local
+ *    defaults;
+ * 2. `<backend>/discovery.json` — everything else, in ONE request (backend discovery.ts, cached there):
+ *    `system` (the system discovery), `environment` (Admin → Environment), `platform` (Admin → Config),
+ *    `apps` (the app registry).
+ *
+ * Config = system, config.json over it, the environment over both (`master_api_url` stays local — it is
+ * how the Shell finds the backend). `platform` and `apps` are handed to the kernel (`applyDiscovery`).
+ * A backend without discovery.json: the system discovery endpoint, as before.
  */
 
 import type { IDiscoveryService, SystemConfig } from '../contracts';
 import { SUPERAPP_PROTOCOL } from '../contracts';
-import { ENVIRONMENT_LOCAL_ONLY, fetchEnvironment } from './environment';
 
 export type { SystemConfig };
+
+/** Keys the environment never overrides: how the Shell finds the backend. */
+const LOCAL_ONLY = ['master_api_url'];
 
 /** The backend: config.json's `master_api_url`, else the build's, else :4400 on a local dev host. */
 const resolveApiBase = (staticConfig: any): string =>
   staticConfig.master_api_url || (import.meta as any).env?.VITE_MASTER_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:4400' : '');
 
+async function fetchJson(url: string): Promise<any | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(url, { cache: 'no-cache', signal: controller.signal });
+    if (!res.ok || !(res.headers.get('content-type') ?? '').includes('json')) return null;
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export class DiscoveryService implements IDiscoveryService {
   private config: SystemConfig = {};
-  /** Discovery API + config.json, before the environment goes over it. */
-  private local: SystemConfig = {};
+  private staticConfig: SystemConfig = {};
   private apiBase = '';
+  private platform: any = null;
+  private apps: any[] | null = null;
   private initialized = false;
 
-  /** The environment over the local config (`master_api_url` stays local). */
-  private merge(environment: Record<string, string>): void {
-    const allowed = Object.fromEntries(Object.entries(environment).filter(([key]) => !ENVIRONMENT_LOCAL_ONLY.includes(key)));
-    this.config = { ...this.local, ...allowed };
-  }
-
-  /**
-   * Fetches dynamic configuration from the discovery endpoint AND static config.json.
-   */
   async initialize(superApp?: { state: { discovery: Record<string, any> } }) {
-    try {
-      // 🏗️ 1. Load Static Runtime Config (from public/config.json)
-      // This is the source of truth for deployment URLs
-      const staticRes = await fetch('/config.json').catch(() => null);
-      let staticConfig: any = {};
-      if (staticRes && staticRes.ok) {
-        const contentType = staticRes.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          staticConfig = await staticRes.json();
-          console.log('🏗️ [Discovery] Static runtime config loaded from /config.json');
-        } else {
-          console.warn('🏗️ [Discovery] /config.json returned non-JSON content (likely index.html fallback)');
-        }
-      }
-
-      // 🛰️ 2. The backend: config.json's master_api_url (runtime) over the baked-in env
-      const apiBase = resolveApiBase(staticConfig);
-      this.apiBase = apiBase;
-
-      // 🌐 3. The platform environment (Admin → Environment) — awaited first: everything after reads it
-      const environment = await fetchEnvironment(apiBase);
-      if (!apiBase) {
-        console.warn('🛰️ [Discovery] No master_api_url found in config.json or environment. API discovery skipped.');
-      }
-      
-      const response = apiBase ? await fetch(`${apiBase}${SUPERAPP_PROTOCOL.ENDPOINTS.DISCOVERY}`).catch(() => null) : null;
-      let apiConfig = {};
-      if (response && response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          try {
-            apiConfig = await response.json();
-            console.log('🛰️ [Discovery] Dynamic API discovery config loaded.');
-          } catch (e) {
-            console.warn('🛰️ [Discovery] API returned invalid JSON');
-          }
-        }
-      }
-
-      // 🧠 4. Merge: config.json over the discovery API, the environment over both
-      this.local = { ...apiConfig, ...staticConfig };
-      this.merge(environment);
-      this.initialized = true;
-      
-      if (superApp) {
-        superApp.state.discovery = { ...this.config };
-      }
-      
-      console.log('🛰️ [Discovery] Total variables loaded:', Object.keys(this.config).length);
-    } catch (err) {
-      console.error('🛰️ [Discovery] Failed to sync configuration', err);
-    }
+    // 1. This deployment's file (an index.html fallback is not JSON: ignored).
+    this.staticConfig = (await fetchJson('/config.json')) ?? {};
+    this.apiBase = String(resolveApiBase(this.staticConfig)).replace(/\/+$/, '');
+    // 2. Everything else, in one request.
+    await this.reload();
+    this.initialized = true;
+    if (superApp) superApp.state.discovery = { ...this.config };
+    console.log('🛰️ [Discovery] Total variables loaded:', Object.keys(this.config).length);
   }
 
-  /** Fetches the environment again (after Admin → Environment saved) and returns the merged config. */
-  async reloadEnvironment(): Promise<SystemConfig> {
-    this.merge(await fetchEnvironment(this.apiBase));
-    return this.getAll();
+  /** Fetches `<backend>/discovery.json` again (after an admin change) and merges it. */
+  async reload(): Promise<boolean> {
+    const payload = this.apiBase ? await fetchJson(`${this.apiBase}/discovery.json`) : null;
+    if (payload && typeof payload === 'object' && 'system' in payload) {
+      const environment = Object.fromEntries(Object.entries(payload.environment ?? {})
+        .filter(([key, value]) => typeof value === 'string' && !LOCAL_ONLY.includes(key)));
+      this.config = { ...(payload.system ?? {}), ...this.staticConfig, ...environment };
+      this.platform = payload.platform ?? null;
+      this.apps = Array.isArray(payload.apps) ? payload.apps : null;
+      return true;
+    }
+    // A backend older than discovery.json: the system discovery endpoint.
+    const system = this.apiBase ? await fetchJson(`${this.apiBase}${SUPERAPP_PROTOCOL.ENDPOINTS.DISCOVERY}`) : null;
+    if (!this.apiBase) console.warn('🛰️ [Discovery] No master_api_url in config.json or the build — backend discovery skipped.');
+    this.config = { ...(system ?? {}), ...this.staticConfig };
+    return false;
+  }
+
+  /** Admin → Config, from the last discovery.json (null: not served). */
+  getPlatform(): any | null {
+    return this.platform;
+  }
+
+  /** The app registry rows, from the last discovery.json (null: not served). */
+  getApps(): any[] | null {
+    return this.apps;
   }
 
   get<T = any>(key: string, defaultValue?: T): T {
