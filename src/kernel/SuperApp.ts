@@ -255,8 +255,17 @@ export class SuperApp implements ISuperApp {
 
   public packageEntryUrl = (appId: string): string => `${this.getApiBaseUrl()}/packages/${encodeURIComponent(appId)}/index.js`;
 
-  public resolveAppEntry = (app: Pick<RegisteredApp, 'id' | 'url' | 'type'>): string =>
-    app.type === 'package' ? this.packageEntryUrl(app.id) : this.formatAppEntryUrl(app.url);
+  public packageFilesEntryUrl = (pkg: string, version: string): string =>
+    `${this.getApiBaseUrl()}/package-files/${encodeURIComponent(pkg)}/${encodeURIComponent(version)}/index.js`;
+
+  /**
+   * A package app loads straight from its extracted version (`package-files/<package>/<version>`);
+   * only while that version is unknown (no server answer yet) does it go through the id shim.
+   */
+  public resolveAppEntry = (app: Pick<RegisteredApp, 'id' | 'url' | 'type' | 'package' | 'version'>): string => {
+    if (app.type !== 'package') return this.formatAppEntryUrl(app.url);
+    return app.package && app.version ? this.packageFilesEntryUrl(app.package, app.version) : this.packageEntryUrl(app.id);
+  };
 
   /** True once `/packages/apps.json` answered — only then may stale server apps be dropped. */
   private serverAppsLoaded = false;
@@ -269,14 +278,15 @@ export class SuperApp implements ISuperApp {
       const res = await fetch(`${base}/packages/apps.json`, { cache: 'no-store', signal: controller.signal });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const list: Array<{ appId: string; package: string; title?: string; description?: string; icon?: string }> = await res.json();
+      const list: Array<{ appId: string; package: string; version: string; title?: string; description?: string; icon?: string }> = await res.json();
       this.state.serverApps = list.map((app): RegisteredApp => ({
         id: app.appId,
         name: app.title || app.appId,
         type: 'package',
         package: app.package,
+        version: app.version,
         url: base,
-        entryUrl: this.packageEntryUrl(app.appId),
+        entryUrl: this.packageFilesEntryUrl(app.package, app.version),
         description: app.description || '',
         icon: app.icon || 'Package',
         isSystem: true,
@@ -412,7 +422,7 @@ export class SuperApp implements ISuperApp {
       parsed.forEach(app => {
         if (app.type === 'package') {
           app.url = this.getApiBaseUrl();
-          app.entryUrl = this.packageEntryUrl(app.id);
+          app.entryUrl = this.resolveAppEntry(app);
         }
       });
       return parsed;
@@ -437,7 +447,7 @@ export class SuperApp implements ISuperApp {
     const apps = this.getRegisteredApps();
     apps.forEach(app => {
       if (app.id && (app.url || app.type === 'package') && app.isEnabled !== false) {
-        const entry = app.type === 'package' ? this.packageEntryUrl(app.id) : app.entryUrl || this.formatAppEntryUrl(app.url);
+        const entry = app.type === 'package' ? this.resolveAppEntry(app) : app.entryUrl || this.formatAppEntryUrl(app.url);
         manifest[app.id] = entry;
         if (app.id === 'workspace') {
           manifest['expose'] = entry;

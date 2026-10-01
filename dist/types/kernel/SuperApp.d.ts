@@ -77,7 +77,12 @@ export declare class SuperApp implements ISuperApp {
     formatAppEntryUrl: (url: string) => string;
     getApiBaseUrl: () => string;
     packageEntryUrl: (appId: string) => string;
-    resolveAppEntry: (app: Pick<RegisteredApp, "id" | "url" | "type">) => string;
+    packageFilesEntryUrl: (pkg: string, version: string) => string;
+    /**
+     * A package app loads straight from its extracted version (`package-files/<package>/<version>`);
+     * only while that version is unknown (no server answer yet) does it go through the id shim.
+     */
+    resolveAppEntry: (app: Pick<RegisteredApp, "id" | "url" | "type" | "package" | "version">) => string;
     /** True once `/packages/apps.json` answered — only then may stale server apps be dropped. */
     private serverAppsLoaded;
     loadServerApps: () => Promise<RegisteredApp[]>;

@@ -118,10 +118,12 @@ export interface ISuperApp extends ISuperAppCore {
     formatAppEntryUrl(url: string): string;
     /** Backend base URL (discovery `master_api_url`, else the API protocol's). */
     getApiBaseUrl(): string;
-    /** Entry of a `package` app: `<api>/packages/<appId>/index.js` — the backend serves its deployed version. */
+    /** The shim entry of a `package` app, `<api>/packages/<appId>/index.js` — re-exports its deployed version. */
     packageEntryUrl(appId: string): string;
-    /** Entry URL for any registered app, by its `type`. */
-    resolveAppEntry(app: Pick<RegisteredApp, 'id' | 'url' | 'type'>): string;
+    /** Entry inside one extracted package version: `<api>/package-files/<package>/<version>/index.js`. */
+    packageFilesEntryUrl(pkg: string, version: string): string;
+    /** Entry URL for any registered app, by its `type` (package apps: their version's files when known). */
+    resolveAppEntry(app: Pick<RegisteredApp, 'id' | 'url' | 'type' | 'package' | 'version'>): string;
     /**
      * Load the local apps the backend serves (`<api>/packages/apps.json`) into the registry — every
      * mini app package gets an app without anyone registering it. Called by createSapp at boot; call

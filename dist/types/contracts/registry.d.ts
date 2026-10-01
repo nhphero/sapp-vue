@@ -53,11 +53,17 @@ export interface RegisteredApp {
     type?: AppSourceType;
     /** `package` apps: the package name the deployment uses (informational; the backend decides the version). */
     package?: string;
+    /** `package` apps: the deployed version (from the server's `/packages/apps.json`) — the entry points into its files. */
+    version?: string;
     /** `server`: created by the backend's package registry (a mini app package), listed from `/packages/apps.json`. */
     managedBy?: 'server';
     /** `remote`: base URL of the remote. `package`: the backend base URL it is served from. */
     url: string;
-    /** Resolved ESM entry: `${url}/src/index.ts` (dev) / `${url}/index.js` (prod), or `<api>/packages/<id>/index.js`. */
+    /**
+     * Resolved ESM entry: `${url}/src/index.ts` (dev) / `${url}/index.js` (prod); a package app:
+     * `<api>/package-files/<package>/<version>/index.js` (the extracted version), or the
+     * `<api>/packages/<id>/index.js` shim while its version is not known yet.
+     */
     entryUrl: string;
     description?: string;
     icon?: string;
