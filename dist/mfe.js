@@ -117,7 +117,7 @@ function z(n) {
     name: a,
     aliases: s,
     async install(d, r, p) {
-      const $ = p?.moduleId || t, g = p?.basePath || `/app/${$}`, I = p?.app ?? null, C = Array.from(/* @__PURE__ */ new Set([$, t, ...s]));
+      const $ = p?.moduleId || t, g = p?.basePath || `/app/${$}`, I = p?.app ?? null, C = Array.from(/* @__PURE__ */ new Set([$, ...s]));
       if (C.every((o) => r.isModuleInstalled(o))) return;
       if (console.log(`🚀 [${t}] Installing mini app as [${$}] with ${e.length} feature(s)...`), i ??= T(t, r), i.setMountId($), !c) {
         c = !0, d.provide(E, i), d.provide(_, m(d, r, i, $, g, I));

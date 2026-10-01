@@ -73,7 +73,10 @@ export function createMiniApp(options: MiniAppOptions): IMfeModule {
       const mountId = installOptions?.moduleId || moduleId;
       const basePath = installOptions?.basePath || `/app/${mountId}`;
       const config = installOptions?.app ?? null;
-      const ids = Array.from(new Set([mountId, moduleId, ...aliases]));
+      // Mounted under another registry id (e.g. "master-data-live" for the master-data bundle), claim only
+      // that id: claiming the bundle id too would make /app/<bundle id> reuse this instance even when the
+      // registry points that id at another source (another version, another host).
+      const ids = Array.from(new Set([mountId, ...aliases]));
       if (ids.every(id => superApp.isModuleInstalled(id))) return;
 
       console.log(`🚀 [${moduleId}] Installing mini app as [${mountId}] with ${features.length} feature(s)...`);

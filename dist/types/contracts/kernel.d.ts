@@ -114,6 +114,12 @@ export interface ISuperApp extends ISuperAppCore {
     registerBusinessModule(id: string, instance: ISuperAppModule | any): void;
     registerModule(id: string, instance: ISuperAppModule): void;
     formatAppEntryUrl(url: string): string;
+    /** Backend base URL (discovery `master_api_url`, else the API protocol's). */
+    getApiBaseUrl(): string;
+    /** Entry of a `package` app: `<api>/packages/<appId>/index.js` — the backend serves its deployed version. */
+    packageEntryUrl(appId: string): string;
+    /** Entry URL for any registered app, by its `type`. */
+    resolveAppEntry(app: Pick<RegisteredApp, 'id' | 'url' | 'type'>): string;
     getRegisteredApps(): RegisteredApp[];
     syncManifestWithRegisteredApps(): void;
     registerApp(app: AppRegistrationInput): RegisteredApp;

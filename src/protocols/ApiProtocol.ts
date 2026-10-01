@@ -14,6 +14,10 @@ export class ApiProtocol implements IApiProtocol {
     this.baseUrl = baseUrl;
   }
 
+  public getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
   /**
    * 🔗 Bind to SuperApp to enable event broadcasting
    */

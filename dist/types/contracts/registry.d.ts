@@ -38,13 +38,24 @@ export interface ModuleEntryRegistration {
     entryComponentId: string;
 }
 export type PathChangeHandler = (subPath: string) => void;
-/** Remote micro-frontend record persisted in `erp_registered_apps`. */
+/**
+ * Where a registered app's bundle comes from:
+ * - `remote`  — a host of its own (`url`: a dev server or a static host). The default.
+ * - `package` — a bundle uploaded to the backend with `sapp publish`; the backend serves the version
+ *   currently deployed for this app id at `<api>/packages/<id>/index.js` (`package-manager.apps.set`).
+ */
+export type AppSourceType = 'remote' | 'package';
+/** Micro-frontend record persisted in `erp_registered_apps`. */
 export interface RegisteredApp {
     id: string;
     name: string;
-    /** Base URL of the remote (dev server or static host). */
+    /** Source of the bundle; absent on records saved before types existed = `remote`. */
+    type?: AppSourceType;
+    /** `package` apps: the package name the deployment uses (informational; the backend decides the version). */
+    package?: string;
+    /** `remote`: base URL of the remote. `package`: the backend base URL it is served from. */
     url: string;
-    /** Resolved ESM entry, e.g. `${url}/src/index.ts` (dev) or `${url}/index.js` (prod). */
+    /** Resolved ESM entry: `${url}/src/index.ts` (dev) / `${url}/index.js` (prod), or `<api>/packages/<id>/index.js`. */
     entryUrl: string;
     description?: string;
     icon?: string;
@@ -55,13 +66,18 @@ export interface RegisteredApp {
 export interface AppRegistrationInput {
     id: string;
     name: string;
-    url: string;
+    /** Default `remote`. */
+    type?: AppSourceType;
+    /** Required for `remote`; ignored for `package` (served by the backend). */
+    url?: string;
+    /** `package` apps: the package deployed for this app. */
+    package?: string;
     description?: string;
     icon?: string;
     isEnabled?: boolean;
 }
 /** `id` renames the app (its `/app/<id>` route and manifest key); it is normalised like `registerApp`. */
-export type AppUpdateInput = Partial<Pick<RegisteredApp, 'id' | 'name' | 'url' | 'description' | 'icon' | 'isEnabled'>>;
+export type AppUpdateInput = Partial<Pick<RegisteredApp, 'id' | 'name' | 'type' | 'package' | 'url' | 'description' | 'icon' | 'isEnabled'>>;
 export interface PingResult {
     success: boolean;
     latencyMs: number;

@@ -5,6 +5,7 @@ export declare class ApiProtocol implements IApiProtocol {
     private superApp;
     constructor(baseUrl?: string);
     setBaseUrl(baseUrl: string): void;
+    getBaseUrl(): string;
     /**
      * 🔗 Bind to SuperApp to enable event broadcasting
      */

@@ -135,6 +135,12 @@ export interface ISuperApp extends ISuperAppCore {
 
   // --- Remote application registry ---
   formatAppEntryUrl(url: string): string;
+  /** Backend base URL (discovery `master_api_url`, else the API protocol's). */
+  getApiBaseUrl(): string;
+  /** Entry of a `package` app: `<api>/packages/<appId>/index.js` — the backend serves its deployed version. */
+  packageEntryUrl(appId: string): string;
+  /** Entry URL for any registered app, by its `type`. */
+  resolveAppEntry(app: Pick<RegisteredApp, 'id' | 'url' | 'type'>): string;
   getRegisteredApps(): RegisteredApp[];
   syncManifestWithRegisteredApps(): void;
   registerApp(app: AppRegistrationInput): RegisteredApp;

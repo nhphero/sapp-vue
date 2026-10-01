@@ -75,11 +75,15 @@ export declare class SuperApp implements ISuperApp {
     };
     init: (config: KernelInitOptions) => void;
     formatAppEntryUrl: (url: string) => string;
+    getApiBaseUrl: () => string;
+    packageEntryUrl: (appId: string) => string;
+    resolveAppEntry: (app: Pick<RegisteredApp, "id" | "url" | "type">) => string;
     private getDefaultApps;
     /**
      * Apps declared by the Shell's config (`config.json` / discovery) under `registry.apps`:
-     * `[{ id, name, description?, icon? }]`, each mounted from its `<id>.url` entry. They join the
-     * defaults, so a new mini app is listed by configuration — no code change, no per-browser setup.
+     * `[{ id, name, description?, icon?, type?, package? }]`. A `remote` app (default) is mounted from its
+     * `<id>.url` entry; a `package` app needs no URL — the backend serves its deployed version. They join
+     * the defaults, so a new mini app is listed by configuration — no code change, no per-browser setup.
      */
     private getConfiguredApps;
     getRegisteredApps: () => RegisteredApp[];

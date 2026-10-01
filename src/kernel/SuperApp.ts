@@ -246,6 +246,17 @@ export class SuperApp implements ISuperApp {
     return `${trimmed}${isDev ? '/src/index.ts' : '/index.js'}`;
   };
 
+  public getApiBaseUrl = (): string => {
+    const fromDiscovery = this.state.discovery?.master_api_url;
+    const api = this.getProtocol('api') as { getBaseUrl?: () => string } | undefined;
+    return String(fromDiscovery || api?.getBaseUrl?.() || '').replace(/\/+$/, '');
+  };
+
+  public packageEntryUrl = (appId: string): string => `${this.getApiBaseUrl()}/packages/${encodeURIComponent(appId)}/index.js`;
+
+  public resolveAppEntry = (app: Pick<RegisteredApp, 'id' | 'url' | 'type'>): string =>
+    app.type === 'package' ? this.packageEntryUrl(app.id) : this.formatAppEntryUrl(app.url);
+
   private getDefaultApps = (): RegisteredApp[] => {
     const isDev = (import.meta as any).env?.DEV ?? true;
     const adminBase = (this.state.discovery?.['admin.url'] || (import.meta as any).env?.VITE_ADMIN_URL || 'http://localhost:4403').replace(/\/+$/, '');
@@ -280,20 +291,37 @@ export class SuperApp implements ISuperApp {
 
   /**
    * Apps declared by the Shell's config (`config.json` / discovery) under `registry.apps`:
-   * `[{ id, name, description?, icon? }]`, each mounted from its `<id>.url` entry. They join the
-   * defaults, so a new mini app is listed by configuration — no code change, no per-browser setup.
+   * `[{ id, name, description?, icon?, type?, package? }]`. A `remote` app (default) is mounted from its
+   * `<id>.url` entry; a `package` app needs no URL — the backend serves its deployed version. They join
+   * the defaults, so a new mini app is listed by configuration — no code change, no per-browser setup.
    */
   private getConfiguredApps = (): RegisteredApp[] => {
     const isDev = (import.meta as any).env?.DEV ?? true;
     const declared = this.state.discovery?.['registry.apps'];
     if (!Array.isArray(declared)) return [];
     return declared
-      .filter((app: any) => app?.id && typeof this.state.discovery?.[`${app.id}.url`] === 'string')
+      .filter((app: any) => app?.id && (app.type === 'package' || typeof this.state.discovery?.[`${app.id}.url`] === 'string'))
       .map((app: any): RegisteredApp => {
+        if (app.type === 'package') {
+          return {
+            id: String(app.id),
+            name: app.name || String(app.id),
+            type: 'package',
+            package: app.package,
+            url: this.getApiBaseUrl(),
+            entryUrl: this.packageEntryUrl(String(app.id)),
+            description: app.description || '',
+            icon: app.icon || 'Layers',
+            isSystem: true,
+            isEnabled: app.isEnabled ?? true,
+            updatedAt: new Date().toISOString(),
+          };
+        }
         const base = String(this.state.discovery[`${app.id}.url`]).replace(/\/+$/, '');
         return {
           id: String(app.id),
           name: app.name || String(app.id),
+          type: 'remote',
           url: base,
           entryUrl: base.endsWith('.js') || base.endsWith('.ts') ? base : `${base}${isDev ? '/src/index.ts' : '/index.js'}`,
           description: app.description || '',
@@ -327,6 +355,13 @@ export class SuperApp implements ISuperApp {
           if (!found.entryUrl) found.entryUrl = this.formatAppEntryUrl(found.url);
         }
       });
+      // A package app's entry follows the backend URL, which may differ per environment.
+      parsed.forEach(app => {
+        if (app.type === 'package') {
+          app.url = this.getApiBaseUrl();
+          app.entryUrl = this.packageEntryUrl(app.id);
+        }
+      });
       return parsed;
     } catch (err) {
       console.error('Failed to read registered apps from storage:', err);
@@ -348,8 +383,8 @@ export class SuperApp implements ISuperApp {
 
     const apps = this.getRegisteredApps();
     apps.forEach(app => {
-      if (app.id && app.url && app.isEnabled !== false) {
-        const entry = app.entryUrl || this.formatAppEntryUrl(app.url);
+      if (app.id && (app.url || app.type === 'package') && app.isEnabled !== false) {
+        const entry = app.type === 'package' ? this.packageEntryUrl(app.id) : app.entryUrl || this.formatAppEntryUrl(app.url);
         manifest[app.id] = entry;
         if (app.id === 'workspace') {
           manifest['expose'] = entry;
@@ -361,16 +396,20 @@ export class SuperApp implements ISuperApp {
   public registerApp = (appData: AppRegistrationInput): RegisteredApp => {
     const rawId = this.normalizeAppId(appData.id);
     if (!rawId) throw new Error('Application ID is required');
-    if (!appData.url) throw new Error('Application Remote URL is required');
+    const type = appData.type === 'package' ? 'package' : 'remote';
+    if (type === 'remote' && !appData.url) throw new Error('Application Remote URL is required');
 
     const apps = this.getRegisteredApps();
-    const entryUrl = this.formatAppEntryUrl(appData.url);
+    const url = type === 'package' ? this.getApiBaseUrl() : (appData.url as string).trim().replace(/\/+$/, '');
+    const entryUrl = this.resolveAppEntry({ id: rawId, url, type });
     const existingIndex = apps.findIndex(a => a.id === rawId);
 
     const newApp: RegisteredApp = {
       id: rawId,
       name: appData.name || rawId,
-      url: appData.url.trim().replace(/\/+$/, ''),
+      type,
+      ...(type === 'package' && appData.package ? { package: appData.package } : {}),
+      url,
       entryUrl,
       description: appData.description || '',
       icon: appData.icon || 'Layers',
@@ -406,7 +445,6 @@ export class SuperApp implements ISuperApp {
     const patch: AppUpdateInput = { ...updates };
     if (patch.url) {
       patch.url = patch.url.trim().replace(/\/+$/, '');
-      (patch as any).entryUrl = this.formatAppEntryUrl(patch.url);
     }
 
     // 🔁 Rename: new slug becomes the route key (/app/<id>) and manifest key
@@ -424,7 +462,16 @@ export class SuperApp implements ISuperApp {
     }
     patch.id = nextId;
 
-    apps[index] = { ...app, ...patch, updatedAt: new Date().toISOString() };
+    const merged: RegisteredApp = { ...app, ...patch, updatedAt: new Date().toISOString() };
+    if (merged.type === 'package') {
+      merged.url = this.getApiBaseUrl();
+    } else {
+      delete merged.package;
+      if (!merged.url) throw new Error('Application Remote URL is required');
+    }
+    // The entry follows the type, the URL and the id (a package app's entry is keyed by its id).
+    merged.entryUrl = this.resolveAppEntry(merged);
+    apps[index] = merged;
     localStorage.setItem(REGISTERED_APPS_STORAGE_KEY, JSON.stringify(apps));
     this.syncManifestWithRegisteredApps();
     this.emit(SUPERAPP_EVENTS.APPS_UPDATED, apps);
