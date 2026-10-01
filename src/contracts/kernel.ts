@@ -156,6 +156,12 @@ export interface ISuperApp extends ISuperAppCore {
    * again after deploying. A server that does not answer leaves the registry as it is.
    */
   loadServerApps(): Promise<RegisteredApp[]>;
+  /**
+   * The manifest.json of a registered app's current source — a package app's deployed version
+   * (`<package files>/<package>/<version>/manifest.json`, with `version`, `publishedAt`…), or a remote
+   * app's `<url>/manifest.json`. Cached per URL; null when there is none.
+   */
+  loadAppManifest(appId: string): Promise<Record<string, any> | null>;
   getRegisteredApps(): RegisteredApp[];
   syncManifestWithRegisteredApps(): void;
   registerApp(app: AppRegistrationInput): RegisteredApp;

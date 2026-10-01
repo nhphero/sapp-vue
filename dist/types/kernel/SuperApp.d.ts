@@ -87,6 +87,8 @@ export declare class SuperApp implements ISuperApp {
     /** True once `/packages/apps.json` answered — only then may stale server apps be dropped. */
     private serverAppsLoaded;
     loadServerApps: () => Promise<RegisteredApp[]>;
+    private manifestCache;
+    loadAppManifest: (appId: string) => Promise<Record<string, any> | null>;
     private getDefaultApps;
     /**
      * Apps declared by the Shell's config (`config.json` / discovery) under `registry.apps`:

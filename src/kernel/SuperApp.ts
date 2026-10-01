@@ -310,6 +310,30 @@ export class SuperApp implements ISuperApp {
     return this.state.serverApps;
   };
 
+  private manifestCache = new Map<string, Promise<Record<string, any> | null>>();
+
+  public loadAppManifest = (appId: string): Promise<Record<string, any> | null> => {
+    const app = this.getRegisteredApps().find(a => a.id === appId);
+    if (!app) return Promise.resolve(null);
+    let url: string;
+    if (app.type === 'package') {
+      if (!app.package || !app.version) return Promise.resolve(null);
+      url = `${this.getPackageFilesBaseUrl()}/${encodeURIComponent(app.package)}/${encodeURIComponent(app.version)}/manifest.json`;
+    } else {
+      // The source root of a remote: its entry minus /src/index.ts (dev) or /index.js (built).
+      const root = (app.entryUrl || this.formatAppEntryUrl(app.url)).replace(/\/(src\/index\.ts|index\.js)$/, '');
+      url = `${root}/manifest.json`;
+    }
+    let pending = this.manifestCache.get(url);
+    if (!pending) {
+      pending = fetch(url, { cache: 'no-cache' })
+        .then(res => (res.ok && (res.headers.get('content-type') ?? '').includes('json') ? res.json() : null))
+        .catch(() => null);
+      this.manifestCache.set(url, pending);
+    }
+    return pending;
+  };
+
   private getDefaultApps = (): RegisteredApp[] => {
     const isDev = (import.meta as any).env?.DEV ?? true;
     const adminBase = (this.state.discovery?.['admin.url'] || (import.meta as any).env?.VITE_ADMIN_URL || 'http://localhost:4403').replace(/\/+$/, '');
