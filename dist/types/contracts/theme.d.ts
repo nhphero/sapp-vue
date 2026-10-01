@@ -82,7 +82,18 @@ export interface IThemeConfig {
         dark: string;
     }>;
     set(patch: Partial<ThemeConfigState>): void;
+    /** Back to the defaults — the platform's (Admin → Config) when set, else the theme's. */
     reset(): void;
+    /**
+     * The platform's look (Admin → Config): the base the user's own changes sit on. Only what the user
+     * changed is kept in localStorage, so a later platform change reaches everyone who did not touch it.
+     * `enforce` (users may not override): the user's changes are dropped and `set` does nothing.
+     */
+    useDefaults(patch: Partial<ThemeConfigState>, options?: {
+        enforce?: boolean;
+    }): void;
+    /** Reactive: true while the platform enforces its look (see `useDefaults`). */
+    readonly locked: boolean;
     /** Re-apply the current state to `:root` (called automatically by `set`). */
     apply(): void;
     toggle(force?: boolean): void;

@@ -49,6 +49,36 @@ export interface BrandingOptions {
     /** Where clicking the logo goes (default `/`). */
     homePath?: string;
 }
+/**
+ * What an admin sets for the whole platform (Admin → Config), read by the Shell at boot from
+ * `<package files>/config.json`. An empty string keeps what the Shell / theme ships with.
+ */
+export interface PlatformConfig {
+    general: {
+        title: string;
+        description: string;
+        logo: string;
+        favicon: string;
+    };
+    theme: {
+        /** The theme package meant for the Shell (informational until themes load from packages). */
+        package: string;
+        mode: 'light' | 'dark';
+        brand: string;
+        font: number;
+        density: number;
+        radius: number;
+        shadow: number;
+        fontFamily: string;
+        surface: string;
+        /** false: users keep the platform look, the theme panel is locked. */
+        allowUserOverride: boolean;
+    };
+    apps: {
+        /** Recently used apps shown in the app switcher; 0 hides the row. */
+        recentCount: number;
+    };
+}
 export interface KernelConfig {
     moduleManifest?: ModuleManifest;
     branding?: BrandingOptions;
@@ -72,6 +102,8 @@ export interface KernelState {
     discovery: Record<string, any>;
     /** Local apps the backend serves (`/packages/apps.json`), loaded by `loadServerApps()`. */
     serverApps: RegisteredApp[];
+    /** The platform config (Admin → Config), loaded by `loadPlatformConfig()`; null until it answers. */
+    platformConfig: PlatformConfig | null;
 }
 /**
  * Anything the kernel can install, Vue-plugin style:
@@ -135,6 +167,12 @@ export interface ISuperApp extends ISuperAppCore {
      * again after deploying. A server that does not answer leaves the registry as it is.
      */
     loadServerApps(): Promise<RegisteredApp[]>;
+    /**
+     * Load the platform config (`<package files>/config.json`) and apply it: page title, favicon, the
+     * branding the theme shows, the theme's default look. Called by createSapp at boot; call again after
+     * saving it. A server that does not answer leaves everything as it is (returns null).
+     */
+    loadPlatformConfig(): Promise<PlatformConfig | null>;
     /**
      * The manifest.json of a registered app's current source — a package app's deployed version
      * (`<package files>/<package>/<version>/manifest.json`, with `version`, `publishedAt`…), or a remote

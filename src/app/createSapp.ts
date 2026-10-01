@@ -136,6 +136,8 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
       link.href = href; if (!link.parentNode) document.head.appendChild(link);
     }
   }
+  // 7c. Platform config (Admin → Config) → title, favicon, branding, the theme's default look
+  await superApp.loadPlatformConfig();
 
   // 8. Global app state (workspaces pre-filled from discovery)
   const appState = services.appState ?? createAppState();

@@ -29,6 +29,9 @@ import type {
   IPolicyService,
   CreateApi,
   II18n,
+  PlatformConfig,
+  BrandingOptions,
+  IThemeConfig,
 } from '../contracts';
 import { REGISTERED_APPS_STORAGE_KEY, HIDDEN_DEFAULT_APPS_STORAGE_KEY, SUPERAPP_EVENTS } from '../contracts';
 
@@ -58,6 +61,7 @@ export class SuperApp implements ISuperApp {
     moduleStates: {} as Record<string, any>, // 🧠 Centralized Mini-App State
     discovery: {} as Record<string, any>, // 🛰️ System discovery parameters
     serverApps: [] as RegisteredApp[], // 📦 Local apps served by the backend's package registry
+    platformConfig: null as PlatformConfig | null, // ⚙️ Admin → Config
   });
 
   private loadingPromises: Map<string, Promise<void>> = new Map();
@@ -225,7 +229,8 @@ export class SuperApp implements ISuperApp {
     this.$app = config.app;
     this.$router = config.router;
     this.$api = config.api;
-    this.$config = config.config ?? null;
+    // Reactive, so a branding change (loadPlatformConfig) reaches the header without a reload.
+    this.$config = config.config ? reactive({ ...config.config }) : null;
     this.$theme = config.theme;
     this.$message = config.message;
     this.$dialog = config.dialog;
@@ -308,6 +313,57 @@ export class SuperApp implements ISuperApp {
     this.syncManifestWithRegisteredApps();
     this.emit(SUPERAPP_EVENTS.APPS_UPDATED, this.getRegisteredApps());
     return this.state.serverApps;
+  };
+
+  /** Branding given to createSapp, kept so an emptied platform field falls back to it. */
+  private shellBranding: BrandingOptions | null = null;
+
+  public loadPlatformConfig = async (): Promise<PlatformConfig | null> => {
+    let config: PlatformConfig;
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+      // A static file the backend writes on every save, beside apps.json.
+      const res = await fetch(`${this.getPackageFilesBaseUrl()}/config.json`, { cache: 'no-cache', signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      config = await res.json();
+    } catch (err: any) {
+      console.warn(`⚙️ [sys-kernel] Platform config unavailable (${err?.message ?? err}) — Shell defaults kept.`);
+      return null;
+    }
+    this.state.platformConfig = config;
+
+    const general = config.general ?? ({} as PlatformConfig['general']);
+    if (this.$config) {
+      this.shellBranding ??= { ...(this.$config.branding ?? { name: '' }) };
+      const shell = this.shellBranding;
+      this.$config.branding = {
+        ...shell,
+        name: general.title || shell.name,
+        tagline: general.description || shell.tagline,
+        logo: general.logo || shell.logo,
+        // A platform logo has no dark variant of its own — the light plate is used instead.
+        logoDark: general.logo ? undefined : shell.logoDark,
+        icon: general.favicon || shell.icon,
+      };
+    }
+    const branding = this.$config?.branding;
+    if (branding?.name) document.title = branding.name;
+    const href = branding?.icon || branding?.logo;
+    if (href) {
+      const link = (document.querySelector('link[rel~="icon"]') as HTMLLinkElement | null) ?? Object.assign(document.createElement('link'), { rel: 'icon' });
+      link.href = href;
+      if (!link.parentNode) document.head.appendChild(link);
+    }
+
+    const theme = config.theme;
+    const themeConfig = (this as any).$themeConfig as IThemeConfig | undefined;
+    if (theme && themeConfig?.useDefaults) {
+      const { package: _pkg, allowUserOverride, ...look } = theme;
+      themeConfig.useDefaults(look, { enforce: allowUserOverride === false });
+    }
+    return config;
   };
 
   private manifestCache = new Map<string, Promise<Record<string, any> | null>>();

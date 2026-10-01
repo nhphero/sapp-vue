@@ -1,7 +1,7 @@
 import { reactive, markRaw, ref, watch, watchEffect, nextTick, defineAsyncComponent, shallowRef, triggerRef, defineComponent, h, provide, inject, type App } from 'vue';
 import type { Router } from 'vue-router';
 import { useLocalStorage } from '@vueuse/core';
-import type { ISuperApp, ISuperAppModule, SappInstallable, IProtocol, KernelInitOptions, KernelConfig, KernelState, ComponentRegistration, SkillRegistration, CommandRegistration, ModuleEntryRegistration, PathChangeHandler, RegisteredApp, AppRegistrationInput, AppUpdateInput, PingResult, IAppState, IAuthState, IFormatService, IPolicyService, CreateApi, II18n } from '../contracts';
+import type { ISuperApp, ISuperAppModule, SappInstallable, IProtocol, KernelInitOptions, KernelConfig, KernelState, ComponentRegistration, SkillRegistration, CommandRegistration, ModuleEntryRegistration, PathChangeHandler, RegisteredApp, AppRegistrationInput, AppUpdateInput, PingResult, IAppState, IAuthState, IFormatService, IPolicyService, CreateApi, II18n, PlatformConfig } from '../contracts';
 /** @deprecated Use `KernelInitOptions` from `@nhphero/vue-sapp` contracts. */
 export type AppConfig = KernelInitOptions;
 export declare class SuperApp implements ISuperApp {
@@ -87,6 +87,9 @@ export declare class SuperApp implements ISuperApp {
     /** True once `/packages/apps.json` answered — only then may stale server apps be dropped. */
     private serverAppsLoaded;
     loadServerApps: () => Promise<RegisteredApp[]>;
+    /** Branding given to createSapp, kept so an emptied platform field falls back to it. */
+    private shellBranding;
+    loadPlatformConfig: () => Promise<PlatformConfig | null>;
     private manifestCache;
     loadAppManifest: (appId: string) => Promise<Record<string, any> | null>;
     private getDefaultApps;
