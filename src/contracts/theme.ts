@@ -70,6 +70,11 @@ export interface ThemeConfigState {
    * faint text, borders and the menu band step darker (lighter in dark mode).
    */
   contrast: string;
+  /**
+   * Header block preset id (see `headers`): '' light (the card) · 'tint' · 'brand' · 'gradient' · 'dark' —
+   * surface and ink of the Shell's header, its app band and the bar under it (tokens.css `--header-*`).
+   */
+  header: string;
 }
 
 export interface IThemeConfig {
@@ -86,6 +91,8 @@ export interface IThemeConfig {
   readonly surfaces: ReadonlyArray<{ id: string; label: string; light: string; dark: string }>;
   /** Contrast presets; `label` is an i18n key. */
   readonly contrasts: ReadonlyArray<{ id: string; label: string }>;
+  /** Header block presets; `label` is an i18n key. */
+  readonly headers: ReadonlyArray<{ id: string; label: string }>;
   set(patch: Partial<ThemeConfigState>): void;
   /** Back to the defaults — the platform's (Admin → Theme) when set, else the theme's. */
   reset(): void;
