@@ -41,6 +41,17 @@ import { vueBridgePlugin } from './node_modules/@nhphero/vue-sapp/src/vite';  //
 
 Proxy `$`: mọi truy cập `superApp.$xyz` được resolve theo thứ tự protocol → business module (bị chặn nếu `isEnabled === false`) → field thật của class (`$router`, `$message`, `$vue`...).
 
+## `$hook` — điểm mở rộng và plugin (contracts/hooks.ts, services/hooks.ts)
+
+`superApp.$hook` (template `$hook`, inject `'$hook'`) là registry để package gắn vào Shell mà không sửa theme / mini app:
+
+- **Slot** — `add(slot, { id, component, props?, order?, when? })` → hàm gỡ; `entries(slot)` (reactive, sắp theo `order` mặc định 100, áp `when`). Cùng `id` = thay thế. Slot chuẩn `HOOK_SLOTS`: `shell.header.start`, `shell.header.end`, `shell.menu.end`, `shell.user-menu` (nhận prop `close`), `shell.sidebar.bottom`, `shell.footer`, `shell.overlay`. Theme vẽ bằng `shell.hook-slot`.
+- **Event** — `on / off / emit` (listener chạy lần lượt, await, lỗi không chặn listener khác). Kernel / theme phát `HOOK_EVENTS`: `app.load` (mount Shell), `app.mount` (AppContainer), `route.change`, `api.error` (`createApi` — qua `ApiFactoryDeps.notify`), `auth.logout`, `locale.change`, `plugin.config`.
+- **Provider** — `provide(capability, { id, match?, priority?, component? })`, `providers()`, `resolve(capability, input)` (provider match có priority cao nhất). `HOOK_PROVIDERS.FILE_VIEWER = 'file.viewer'` — theme `display.file` dùng.
+- `scope(owner)` → cùng API, ghi lại mọi thứ đăng ký, `dispose()` gỡ hết.
+
+**Plugin**: package type `plugin`, default export `definePlugin({ id, install(ctx), uninstall? })`. `ctx = { id, hook (scope 'plugin:<id>'), config (reactive), superApp }`. Discovery trả `plugins: [{ id, package, version, url, config }]` (backend chỉ gửi plugin đang bật, không gửi field secret); `createSapp` mount xong gọi `superApp.loadPlugins()` → `import()` `url` hoặc `<package files>/<package>/<version>/index.js`. `applyDiscovery` (vd. `reloadEnvironment()` sau khi admin lưu) đồng bộ lại: plugin bị tắt / đổi nguồn thì `uninstall` + `dispose`, config đổi thì `Object.assign` + emit `plugin.config`, plugin mới thì load.
+
 `superApp.$vue` là bộ primitive Vue (`ref`, `reactive`, `computed`, `h`, `defineComponent`, `useLocalStorage`...) để mini app tạo state mà không cần import `vue`.
 
 ## Luồng load một mini app
