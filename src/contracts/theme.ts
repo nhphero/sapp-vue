@@ -65,6 +65,11 @@ export interface ThemeConfigState {
   shadow: number;
   /** Page surface preset id (see `surfaces`). Empty = the tokens.css default. */
   surface: string;
+  /**
+   * Contrast preset id (see `contrasts`): '' standard · 'high' · 'max' — page vs card, secondary and
+   * faint text, borders and the menu band step darker (lighter in dark mode).
+   */
+  contrast: string;
 }
 
 export interface IThemeConfig {
@@ -79,6 +84,8 @@ export interface IThemeConfig {
   readonly webFonts: Readonly<Record<string, string>>;
   /** Page surface presets; `label` is an i18n key. */
   readonly surfaces: ReadonlyArray<{ id: string; label: string; light: string; dark: string }>;
+  /** Contrast presets; `label` is an i18n key. */
+  readonly contrasts: ReadonlyArray<{ id: string; label: string }>;
   set(patch: Partial<ThemeConfigState>): void;
   /** Back to the defaults — the platform's (Admin → Theme) when set, else the theme's. */
   reset(): void;
