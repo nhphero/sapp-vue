@@ -75,6 +75,11 @@ export interface ThemeConfigState {
    * surface and ink of the Shell's header, its app band and the bar under it (tokens.css `--header-*`).
    */
   header: string;
+  /**
+   * Control size multiplier (see `controls`): 0.9 compact · 1 default · 1.15 large — the one height every
+   * button, input, select, chip and pagination control shares (tokens.css `--control-h`).
+   */
+  control: number;
 }
 
 export interface IThemeConfig {
@@ -93,6 +98,8 @@ export interface IThemeConfig {
   readonly contrasts: ReadonlyArray<{ id: string; label: string }>;
   /** Header block presets; `label` is an i18n key. */
   readonly headers: ReadonlyArray<{ id: string; label: string }>;
+  /** Control size presets; `label` is an i18n key. */
+  readonly controls: ReadonlyArray<{ v: number; label: string }>;
   set(patch: Partial<ThemeConfigState>): void;
   /** Back to the defaults — the platform's (Admin → Theme) when set, else the theme's. */
   reset(): void;
