@@ -11,6 +11,7 @@ import type { II18n, TranslateParams } from './i18n';
 import type { IFormatService } from './format';
 import type { IAuthState } from './auth';
 import type { IPolicyService } from './policy';
+import type { IHooks } from './hooks';
 
 declare module 'vue' {
   interface ComponentCustomProperties {
@@ -34,6 +35,8 @@ declare module 'vue' {
     $f: IFormatService;
     /** Public environment: `{{ $env.get('BIZ_API_SERVER') }}`, `v-if="$env.has('BIZ_API_SERVER')"`. */
     $env: IEnvironment;
+    /** Extension points: `$hook.entries('shell.menu.end')`, `$hook.resolve('file.viewer', file)` (contracts/hooks.ts). */
+    $hook: IHooks;
   }
 }
 

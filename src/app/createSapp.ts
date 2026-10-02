@@ -6,6 +6,7 @@ import { createApp, defineComponent, h } from 'vue';
 import { createPinia } from 'pinia';
 import { createRouter, createWebHistory, RouterView, type RouteRecordRaw } from 'vue-router';
 import type { ISapp, ISuperApp, SappContext, SappOptions, ShellFeatureContext } from '../contracts';
+import { HOOK_EVENTS, SUPERAPP_EVENTS } from '../contracts';
 import { SuperApp } from '../kernel/SuperApp';
 import { ApiProtocol } from '../protocols/ApiProtocol';
 import { SocketProtocol } from '../protocols/SocketProtocol';
@@ -72,7 +73,10 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
   // switch moves every date and price on screen with nothing else to wire up.
   const format = createFormatServiceFromI18n(i18n, { currency: options.currency });
   superApp.registerProtocol('i18n', i18n as any);
-  i18n.onLocaleChange((locale, previous) => superApp.emit('i18n:locale-changed', { locale, previous }));
+  i18n.onLocaleChange((locale, previous) => {
+    superApp.emit('i18n:locale-changed', { locale, previous });
+    void superApp.$hook.emit(HOOK_EVENTS.LOCALE_CHANGE, { locale, previous });
+  });
 
   // 4. Protocols
   const api = new ApiProtocol(apiBase);
@@ -88,6 +92,7 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
   superApp.createApi = createApiFactory({
     tokenKey,
     message: services.messageService,
+    notify: error => void superApp.$hook.emit(HOOK_EVENTS.API_ERROR, error),
   });
   const loginPath = options.auth?.loginPath ?? '/login';
   const Layout = options.layout ?? defineComponent({ name: 'SappLayout', setup: () => () => h(RouterView) });
@@ -109,6 +114,8 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
     if (!to.meta.public && !token) return next(loginPath);
     next();
   });
+  router.afterEach((to, from) => void superApp.$hook.emit(HOOK_EVENTS.ROUTE_CHANGE, { to, from }));
+  superApp.on(SUPERAPP_EVENTS.AUTH_LOGOUT, () => void superApp.$hook.emit(HOOK_EVENTS.AUTH_LOGOUT));
 
   const ctx: SappContext = { app, router, pinia, superApp, discovery, api, socket };
 
@@ -177,6 +184,8 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
   gp.$f = format;
   superApp.$f = format;
   gp.$env = superApp.$env;
+  gp.$hook = superApp.$hook;
+  app.provide('$hook', superApp.$hook);
   app.provide('$env', superApp.$env);
   app.provide('$i18n', i18n);
   app.provide('$f', format);
@@ -195,6 +204,9 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
     mount(selector = '#app') {
       app.use(router);
       app.mount(selector);
+      void superApp.$hook.emit(HOOK_EVENTS.APP_LOAD, { superApp });
+      // 11. Plugins (Admin → Plugins): loaded after the Shell shows — a slow or broken plugin never holds it up.
+      void superApp.loadPlugins();
       return app;
     },
   };

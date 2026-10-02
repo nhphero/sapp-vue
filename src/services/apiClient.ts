@@ -5,6 +5,8 @@ interface ApiFactoryDeps {
   /** localStorage key of the access token (`createSapp` option `auth.tokenKey`). */
   tokenKey: string;
   message?: MessageService | null;
+  /** Told of every failed call (the Shell emits `api.error` through `$hook`). */
+  notify?: (error: ApiClientError) => void;
 }
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -91,6 +93,7 @@ export function createApiFactory(deps: ApiFactoryDeps): CreateApi {
           return Promise.reject(error);
         }
         const apiError = toApiClientError(error);
+        try { deps.notify?.(apiError); } catch { /* a listener never breaks the call */ }
         if (onError) {
           onError(apiError);
         } else {

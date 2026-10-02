@@ -16,5 +16,6 @@ export * from './format';
 export * from './auth';
 export * from './policy';
 export * from './api-client';
+export * from './hooks';
 import './vue-augment';
 export * from './env';

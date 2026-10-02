@@ -159,6 +159,13 @@ export interface ISuperApp extends ISuperAppCore {
   $f: IFormatService;
   /** The public environment: `$env.get('BIZ_API_SERVER')`, `$env.has(…)`, `$env.require(…)` (contracts/env.ts). */
   $env: IEnvironment;
+  /** Extension points: slots, events, providers (contracts/hooks.ts). Template global `$hook`. */
+  $hook: import('./hooks').IHooks;
+  /**
+   * Loads the plugins enabled in Admin → Plugins (discovery `plugins`); called by createSapp. Later
+   * discovery refreshes update their config, load newly enabled ones and unload disabled ones.
+   */
+  loadPlugins(): Promise<void>;
   /** Dynamic access to any registered protocol or business module (`$auth`, `$socket`...). */
   [dynamic: `$${string}`]: any;
 

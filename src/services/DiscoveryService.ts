@@ -48,6 +48,7 @@ export class DiscoveryService implements IDiscoveryService {
   private platform: any = null;
   private environment: Record<string, string> = {};
   private apps: any[] | null = null;
+  private plugins: any[] | null = null;
   private initialized = false;
 
   async initialize(superApp?: { state: { discovery: Record<string, any> } }) {
@@ -71,6 +72,7 @@ export class DiscoveryService implements IDiscoveryService {
       this.config = { ...(payload.system ?? {}), ...this.staticConfig, ...environment };
       this.platform = payload.platform ?? null;
       this.apps = Array.isArray(payload.apps) ? payload.apps : null;
+      this.plugins = Array.isArray(payload.plugins) ? payload.plugins : null;
       return true;
     }
     // A backend older than discovery.json: the system discovery endpoint.
@@ -93,6 +95,11 @@ export class DiscoveryService implements IDiscoveryService {
   /** The app registry rows, from the last discovery.json (null: not served). */
   getApps(): any[] | null {
     return this.apps;
+  }
+
+  /** The plugins to load, from the last discovery.json (null: not served). */
+  getPlugins(): any[] | null {
+    return this.plugins;
   }
 
   get<T = any>(key: string, defaultValue?: T): T {

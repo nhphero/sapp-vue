@@ -24,4 +24,6 @@ export interface IDiscoveryService {
   getPlatform?(): any | null;
   /** The app registry rows from the last discovery.json (null: not served). */
   getApps?(): any[] | null;
+  /** The plugins to load (enabled in Admin → Plugins) from the last discovery.json (null: not served). */
+  getPlugins?(): import('./hooks').PluginDescriptor[] | null;
 }

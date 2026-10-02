@@ -40,6 +40,9 @@ import { REGISTERED_APPS_STORAGE_KEY, SUPERAPP_EVENTS } from '../contracts';
 /** @deprecated Use `KernelInitOptions` from `@nhphero/vue-sapp` contracts. */
 export type AppConfig = KernelInitOptions;
 
+import { createHooks } from '../services/hooks';
+import { HOOK_EVENTS, type PluginDefinition, type PluginDescriptor } from '../contracts/hooks';
+
 export class SuperApp implements ISuperApp {
   // Dynamic `$<protocol|module>` access resolved by the constructor Proxy.
   [dynamic: `$${string}`]: any;
@@ -199,6 +202,79 @@ export class SuperApp implements ISuperApp {
   /**
    * ⚡ [sys-kernel] Invoke a SuperApp Action via the default API Bridge
    */
+  /** Extension points (contracts/hooks.ts). */
+  public $hook = createHooks();
+
+  /** Loaded plugins: their definition, the scoped hook they got, their reactive config and where they came from. */
+  private plugins = new Map<string, { def: PluginDefinition; hook: ReturnType<ReturnType<typeof createHooks>['scope']>; config: Record<string, unknown>; source: string }>();
+  private pluginsStarted = false;
+
+  /** Where a plugin's module is: its own URL, else its version's files on this server. */
+  private pluginEntry = (p: PluginDescriptor): string =>
+    (p.url ? this.formatAppEntryUrl(p.url) : p.version ? this.packageFilesEntryUrl(p.package, p.version) : '');
+
+  public loadPlugins = async (): Promise<void> => {
+    this.pluginsStarted = true;
+    await this.syncPlugins(this.discoveryService?.getPlugins?.() ?? []);
+  };
+
+  /** Brings the loaded plugins in line with `list`: config updated, new ones loaded, gone / moved ones unloaded. */
+  private syncPlugins = async (list: PluginDescriptor[]): Promise<void> => {
+    const wanted = new Map(list.filter(p => p?.id).map(p => [p.id, p]));
+    for (const [id, loaded] of [...this.plugins]) {
+      const next = wanted.get(id);
+      if (!next || this.pluginEntry(next) !== loaded.source) await this.unloadPlugin(id);
+    }
+    for (const p of wanted.values()) {
+      const loaded = this.plugins.get(p.id);
+      if (loaded) {
+        const next = p.config ?? {};
+        if (JSON.stringify(next) !== JSON.stringify(loaded.config)) {
+          for (const key of Object.keys(loaded.config)) if (!(key in next)) delete loaded.config[key];
+          Object.assign(loaded.config, next);
+          void this.$hook.emit(HOOK_EVENTS.PLUGIN_CONFIG, { id: p.id, config: loaded.config });
+        }
+        continue;
+      }
+      await this.loadPlugin(p);
+    }
+  };
+
+  private loadPlugin = async (p: PluginDescriptor): Promise<void> => {
+    const source = this.pluginEntry(p);
+    if (!source) {
+      console.warn(`🪝 [plugins] ${p.id}: no version and no URL — skipped.`);
+      return;
+    }
+    try {
+      const mod = await import(/* @vite-ignore */ source);
+      const def: PluginDefinition | undefined = mod?.default ?? mod?.plugin;
+      if (!def || typeof def.install !== 'function') throw new Error('the module has no default export with install()');
+      const hook = this.$hook.scope(`plugin:${p.id}`);
+      const config = reactive({ ...(p.config ?? {}) });
+      this.plugins.set(p.id, { def, hook, config, source });
+      await def.install({ id: p.id, hook, config, superApp: this as unknown as ISuperApp });
+      console.log(`🪝 [plugins] ${p.id} loaded (${source})`);
+    } catch (err: any) {
+      this.plugins.get(p.id)?.hook.dispose();
+      this.plugins.delete(p.id);
+      console.error(`🪝 [plugins] ${p.id} failed to load from ${source}:`, err?.message ?? err);
+    }
+  };
+
+  private unloadPlugin = async (id: string): Promise<void> => {
+    const loaded = this.plugins.get(id);
+    if (!loaded) return;
+    try {
+      await loaded.def.uninstall?.({ id, hook: loaded.hook, config: loaded.config, superApp: this as unknown as ISuperApp });
+    } catch (err) {
+      console.error(`🪝 [plugins] ${id} uninstall failed:`, err);
+    }
+    loaded.hook.dispose();
+    this.plugins.delete(id);
+    console.log(`🪝 [plugins] ${id} unloaded`);
+  };
+
   public doAction = async <T = any>(action: string, params: any = {}): Promise<T> => {
     const api = this.getProtocol('api');
     if (!api) throw new Error('API protocol not registered in SuperApp.');
@@ -408,6 +484,8 @@ export class SuperApp implements ISuperApp {
       this.syncManifestWithRegisteredApps();
       this.emit(SUPERAPP_EVENTS.APPS_UPDATED, this.getRegisteredApps());
     }
+    const plugins = source.getPlugins?.();
+    if (plugins && this.pluginsStarted) void this.syncPlugins(plugins);
     return { platform: !!platform, apps: !!rows };
   };
 
