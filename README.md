@@ -69,5 +69,7 @@ Push to `main`, then re-pin the apps (`sapp update @nhphero/vue-sapp`, or the co
 
 ## Changes
 
+- **2026-10-02** — No workspace on the frontend (no `x-workspace-id`, no `createApi({ workspace })`, no
+  `$appState.current_workspace`); a registry app loads a package build or a URL of its own.
 - **2026-10-02** — `IThemeConfig.preview()`, `PlatformConfig.look`; the Shell is a theme.
 - **2026-10-01** — `superApp.$env`; `createApi` with a lazy `baseURL` and `onSuccess`; API under `/api`.
