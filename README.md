@@ -1,63 +1,73 @@
-# @nhphero/vue-sapp
+# vue-sapp — the Super App kernel
 
-Super App (ESA) architecture extracted from `master-app`: the host kernel, core protocols, discovery/app-state services, the micro-frontend bridge and the contracts every party codes against.
+The kernel of the Super App: `createSapp` boots a Shell, `createMiniApp` defines a mini app, and the
+contracts both code against — registry, protocols, discovery, the public environment, auth, policy,
+formatting, i18n, the HTTP client and the bridge that makes every mini app share one Vue runtime.
 
-## Layout
+| | |
+|---|---|
+| Package | npm `@nhphero/vue-sapp` |
+| Repo | `nhphero/sapp-vue` (pinned by commit tarball) |
+| Used by | every Shell theme and every mini app |
+| Peers | `vue`, `pinia`, `vue-router`, `@vueuse/core`, `axios` |
 
-| Path | Contents |
-| --- | --- |
-| `src/contracts/` | `ISuperApp`, `ISuperAppCore`, `IProtocol`, `ISuperAppModule`, `IMfeModule`, registry shapes, transport/discovery/app-state contracts, storage keys, events, endpoints |
-| `src/kernel/` | `SuperApp` class (implements `ISuperApp`) |
-| `src/protocols/` | `ApiProtocol` (`$api`), `SocketProtocol` (`$socket`) |
-| `src/services/` | `discoveryService`, `createAppState` |
-| `src/bridge/` | `installMfBridge` (Shell) and `vue` / `pinia` / `vue-router` proxies for MFE bundles |
-| `src/app/` | `createSapp` (boots the whole Shell) and `defineShellFeature` |
-| `src/mfe/` | `createMiniApp`, `defineFeature`, feature router, `FeatureView`, `useMiniRouter` / `useMiniApp` for mini apps |
-| `src/vite/` | `vueBridgePlugin` for MFE `vite.config.ts` |
+## Features
 
-## Usage
+- **`createSapp`** — boots a Shell in one call: bridge, Vue app, Pinia, discovery, kernel, theme,
+  protocols, router, business modules, Shell features.
+- **Kernel registry** — components, skills, commands, module entries, protocols, apps; everything is
+  resolved by id (`superApp.getComponent(id)`, `$c(id)`).
+- **Discovery** — one request at start (`<api>/discovery.json`): public environment, platform
+  config, app registry; `superApp.$env` reads the public environment reactively.
+- **Mini apps** (`/mfe`) — `createMiniApp({ id, features, layout, messages, setup })`, feature
+  router, `FeatureView`; loaded by URL at runtime, CSS scoped per app.
+- **Services** — `$auth`, `$policy`, `$f` (format), `$i18n`, `createApi()` (the app's axios client:
+  token, request id, errors).
+- **Vite plugins** (`/vite`) — `vueBridgePlugin` (one Vue through the Shell's bridge),
+  `mfeScopedCssPlugin` (a mini app's utilities apply only inside its viewport).
 
-Shell (`master-app/src/main.ts`):
+## Configuration
+
+None of its own: a Shell passes its options to `createSapp`; values come from the Shell's build
+environment and the server's discovery.
+
+## Use it
 
 ```ts
+// a Shell theme — src/bootstrap.ts
 import { createSapp } from '@nhphero/vue-sapp';
-const sapp = await createSapp({ root: App, layout: DashboardLayout, theme: defaultTheme, tokens: THEME, manifest: APP_REGISTRY, modules: installBusinessModules, features: shellFeatures });
+const sapp = await createSapp({ root: App, layout: DashboardLayout, theme: defaultTheme, tokens: THEME, features: shellFeatures });
 sapp.mount('#app');
-// the low-level pieces stay exported: SuperApp, ApiProtocol, SocketProtocol, discoveryService, createAppState, installMfBridge
 ```
-
-Micro-frontend entry (`admin-app`, `demo-app` template):
 
 ```ts
-import { createMiniApp, defineFeature } from '@nhphero/vue-sapp/mfe';
-
-const dashboard = defineFeature({
-  id: 'dashboard',
-  install(ctx) {
-    ctx.registerRoute({ path: '', component: () => import('./features/dashboard/DashboardView.vue'), meta: { title: 'Dashboard', nav: true } });
-    ctx.registerComponent({ id: 'hello-card', component: () => import('./features/dashboard/HelloCard.vue') }); // → mini.hello-card
-  },
-});
-
-export default createMiniApp({ id: 'mini', name: 'Mini App', layout: () => import('./layouts/MainLayout.vue'), features: [dashboard] });
-// or hand-written: defineMfeModule({ id, name, install(app, superApp: ISuperApp) { ... } }) from '@nhphero/vue-sapp/contracts'
+// a mini app — src/index.ts
+import { createMiniApp } from '@nhphero/vue-sapp/mfe';
+export default createMiniApp({ id: MODULE_ID, name: MODULE_NAME, layout: () => import('./layouts/MainLayout.vue'), features, messages, setup });
 ```
-
-MFE `vite.config.ts`:
 
 ```ts
-import { vueBridgePlugin } from '../../../packages/vue-sapp/src/vite';
+// a mini app — vite.config.ts
+import { vueBridgePlugin, mfeScopedCssPlugin } from './node_modules/@nhphero/vue-sapp/src/vite';
 ```
 
-## Install (outside this repo)
+Entries: `@nhphero/vue-sapp` (Shell), `/contracts`, `/mfe`, `/app`, `/vite`, `/bridge/vue|pinia|vue-router`.
+
+## Develop
 
 ```bash
-npm i @nhphero/vue-sapp            # Shell or mini app
-npm i -g @nhphero/sapp-cli && sapp create my-app --id my --port 4420
+npm install              # from the repo root (npm workspace)
+npm run typecheck -w @nhphero/vue-sapp
 ```
 
-Entries: `@nhphero/vue-sapp` (Shell: createSapp, kernel…), `/contracts`, `/mfe` (createMiniApp, defineFeature…), `/app`, `/vite` (vueBridgePlugin, mfeScopedCssPlugin), `/bridge/vue|pinia|vue-router`. Build with `npm run build` (vite lib + vue-tsc declarations).
+A contract changes first, then the Shell implementation and every caller.
 
-## Resolution (inside this monorepo)
+## Deploy
 
-Apps consume the package as source. Each app aliases `@nhphero/vue-sapp` to `../../../packages/vue-sapp/src/index.ts` in `vite.config.ts` and `tsconfig.json`, and `docker-compose.yml` mounts `./packages` at `/packages` so the same relative path resolves inside containers.
+Push to `main`, then re-pin the apps (`sapp update @nhphero/vue-sapp`, or the commit SHA in each
+`package.json`, theme included) and reinstall.
+
+## Changes
+
+- **2026-10-02** — `IThemeConfig.preview()`, `PlatformConfig.look`; the Shell is a theme.
+- **2026-10-01** — `superApp.$env`; `createApi` with a lazy `baseURL` and `onSuccess`; API under `/api`.

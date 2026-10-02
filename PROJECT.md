@@ -81,7 +81,7 @@ interface IThemeConfig                     // superApp.$themeConfig: set / reset
 interface MessageService / DialogService   // $message (toast + alert/confirm/prompt) / $dialog (contracts/ui.ts)
 interface IAuthState                       // $auth trong template, superApp.$authState trong script, app.useAuth() ở mini app (contracts/auth.ts)
 interface CreateApi / ApiClientError       // superApp.createApi({ baseURL, headers, onError… }) → axios instance cho backend riêng của app (contracts/api-client.ts)
-interface IPolicyService                   // $policy.can('role', …) — protocol `policy`, feature master-app/src/features/policy, app.usePolicy() ở mini app (contracts/policy.ts)
+interface IPolicyService                   // $policy.can('role', …) — protocol `policy`, feature packages/sapp-theme-dashboard/src/features/policy, app.usePolicy() ở mini app (contracts/policy.ts)
 
 const SUPERAPP_PROTOCOL.ENDPOINTS = { AUTH, SYSTEM, INTEGRATION, PRODUCTION, DB_QUERY, SUPERAPP_CALL, DISCOVERY }
 const SUPERAPP_EVENTS            = { SYSTEM_ERROR: 'system:error', SYSTEM_GOVERNANCE: 'system:governance', APPS_UPDATED: 'apps:updated' }

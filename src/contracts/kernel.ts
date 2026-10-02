@@ -73,7 +73,7 @@ export interface BrandingOptions {
 export interface PlatformConfig {
   /** logo / favicon: a URL, or a path on the package files host (`_assets/logo-<hash>.png`) — see `resolvePackageFileUrl`. */
   general: { title: string; description: string; logo: string; favicon: string };
-  /** A theme package and its version — "stable" (default) follows the package's stable alias; empty package = built into the Shell. */
+  /** The theme that renders the platform (a whole Shell, served at `/`) and its version — "stable" (default) follows the package's stable alias; empty package = the first deployed Shell theme. */
   theme: { package: string; version: string };
   apps: {
     /** Recently used apps shown in the app switcher; 0 hides the row. */

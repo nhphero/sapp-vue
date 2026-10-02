@@ -1,5 +1,5 @@
 /**
- * 🏛️ Shell (master app) composition contracts.
+ * 🏛️ Shell composition contracts — implemented by a Shell theme (e.g. sapp-theme-dashboard).
  * `createSapp()` boots the whole Shell — Vue app, Pinia, router, MF bridge, discovery, protocols,
  * kernel, theme, business modules — and the Shell's own code only registers *features*.
  */
