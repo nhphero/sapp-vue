@@ -84,6 +84,11 @@ export interface PlatformConfig {
    * changes sits on top, unless `enforce` locks it. Applied by the theme (`IThemeConfig.useDefaults`).
    */
   look?: Partial<ThemeConfigState> & { enforce?: boolean };
+  /**
+   * The Shell theme's navigation (Admin → Config → Navigation): `viewCache` keeps a page left alive
+   * (up to `viewCacheMax` views), `history` shows the pages opened as tabs (up to `historyMax`).
+   */
+  navigation?: { viewCache: boolean; viewCacheMax: number; history: boolean; historyMax: number };
 }
 
 export interface KernelConfig {
