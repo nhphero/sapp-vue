@@ -1,5 +1,5 @@
 import type { IApiProtocol, ISuperAppCore, RequestOptions, ActionResponse, SystemErrorInfo } from '../contracts';
-import { SUPERAPP_EVENTS, SUPERAPP_PROTOCOL, ACCESS_TOKEN_STORAGE_KEY, ACTIVE_WORKSPACE_STORAGE_KEY } from '../contracts';
+import { SUPERAPP_EVENTS, SUPERAPP_PROTOCOL, ACCESS_TOKEN_STORAGE_KEY } from '../contracts';
 
 export class ApiProtocol implements IApiProtocol {
   public id = 'api' as const;
@@ -27,28 +27,12 @@ export class ApiProtocol implements IApiProtocol {
 
   private getHeaders() {
     const token = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-    
-    // 🛰️ ESA v5 Synchronization: Priority is given to the global appState
-    // This ensures that when the workspace is switched in the UI, all subsequent
-    // API calls immediately use the new context.
-    const workspaceId = (this.superApp as any)?.$appState?.current_workspace || localStorage.getItem(ACTIVE_WORKSPACE_STORAGE_KEY);
-    
     const requestId = `req-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const headers: any = {
       'Authorization': token ? `Bearer ${token}` : '',
       'Content-Type': 'application/json',
       'request-id': requestId
     };
-    
-    if (workspaceId) {
-      headers['x-workspace-id'] = workspaceId;
-      
-      // Also sync back to localStorage for legacy components that might still read it directly
-      if (localStorage.getItem(ACTIVE_WORKSPACE_STORAGE_KEY) !== String(workspaceId)) {
-        localStorage.setItem(ACTIVE_WORKSPACE_STORAGE_KEY, String(workspaceId));
-      }
-    }
-    
     return headers;
   }
 

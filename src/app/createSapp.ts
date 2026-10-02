@@ -88,7 +88,6 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
   superApp.createApi = createApiFactory({
     tokenKey,
     message: services.messageService,
-    appState: () => superApp.$appState,
   });
   const loginPath = options.auth?.loginPath ?? '/login';
   const Layout = options.layout ?? defineComponent({ name: 'SappLayout', setup: () => () => h(RouterView) });
@@ -140,10 +139,8 @@ export async function createSapp(options: SappOptions): Promise<ISapp> {
   if (!served.platform) await superApp.loadPlatformConfig();
   if (!served.apps) await superApp.loadServerApps();
 
-  // 8. Global app state (workspaces pre-filled from discovery)
+  // 8. Global app state
   const appState = services.appState ?? createAppState();
-  const workspaces = discovery.get('system.workspaces');
-  if (workspaces) appState.workspaces = workspaces;
   superApp.$appState = appState;
   app.config.globalProperties.$appState = appState;
 

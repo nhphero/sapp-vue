@@ -69,7 +69,7 @@ export function createMiniApp(options: MiniAppOptions): IMfeModule {
     name,
     aliases,
     async install(app, superApp, installOptions?: MfeInstallOptions) {
-      // The Shell may mount this bundle under a registry id that differs from `id` (e.g. "workspace" → this app).
+      // The Shell may mount this bundle under a registry id that differs from `id` (e.g. a legacy alias → this app).
       const mountId = installOptions?.moduleId || moduleId;
       const basePath = installOptions?.basePath || `/app/${mountId}`;
       const config = installOptions?.app ?? null;

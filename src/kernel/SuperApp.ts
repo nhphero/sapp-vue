@@ -335,7 +335,6 @@ export class SuperApp implements ISuperApp {
     const env = (import.meta as any).env ?? {};
     const fallback: Record<string, string> = {
       admin: env.VITE_ADMIN_URL || 'http://localhost:4403',
-      workspace: env.VITE_WORKSPACE_URL || 'http://localhost:4409',
     };
     return String(this.state.discovery?.[`${id}.url`] || fallback[id] || '').replace(/\/+$/, '');
   };
@@ -494,7 +493,6 @@ export class SuperApp implements ISuperApp {
   /** Stand-ins while the server's registry has not answered (it seeds the same built-ins). */
   private getBuiltInApps = (): RegisteredApp[] => [
     { id: 'admin', code: 'admin', name: 'Admin Management', description: 'Platform Governance & Applications Registry', icon: 'Shield', isSystem: true },
-    { id: 'workspace', code: 'workspace', name: 'Workspace Hub', description: 'Logic Orchestration & Flow Designer', icon: 'Globe', isSystem: true },
   ].map(app => this.toRegisteredApp({ ...app, type: 'remote', url: '' }));
 
   /**
@@ -545,7 +543,6 @@ export class SuperApp implements ISuperApp {
       const entry = app.type === 'package' ? this.resolveAppEntry(app) : app.entryUrl || (app.url ? this.formatAppEntryUrl(app.url) : '');
       if (!entry) continue;
       manifest[app.id] = entry;
-      if (app.id === 'workspace') manifest['expose'] = entry;
     }
   };
 

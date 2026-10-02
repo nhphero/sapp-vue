@@ -37,7 +37,7 @@ import { vueBridgePlugin } from './node_modules/@nhphero/vue-sapp/src/vite';  //
 | Skill | `registerSkill({ id, name, category, icon, handler })` | `superApp.skills` | hiển thị ở sidebar / command palette |
 | Command | `registerCommand({ id, name, category, shortcut, handler })` | `runCommand(id)` | ⌘K |
 | Path listener | `onPathChange(moduleId, handler)` | `runPathAction(moduleId, subPath)` | routing nội bộ của mini app |
-| App (remote / package) | `registerApp / updateApp / deleteApp` (async, admin) | `getRegisteredApps()` | **registry trên server** (bảng `sys_apps`): ghi qua action `apps.registry.save/remove`, Shell đọc file tĩnh `<package files>/registry.json` lúc boot (`loadServerApps()`), sync vào `moduleManifest`. `id` là khoá cố định (UUID do server sinh), `code` là tên máy cố định tuỳ chọn (`admin`…; `getApp` / `appPath` / `findAppByRoute` nhận cả code), `slug` là route đổi được (`updateApp(id, { slug })`). Remote app để trống URL = lấy `<code>.url` của config Shell. Server chưa trả lời thì chỉ có built-in (`admin`, `workspace`) + `registry.apps` của config. `importLocalApps()` đẩy app cũ trong localStorage `erp_registered_apps` (+ `registry.apps` của config) lên server một lần |
+| App (remote / package) | `registerApp / updateApp / deleteApp` (async, admin) | `getRegisteredApps()` | **registry trên server** (bảng `sys_apps`): ghi qua action `apps.registry.save/remove`, Shell đọc file tĩnh `<package files>/registry.json` lúc boot (`loadServerApps()`), sync vào `moduleManifest`. `id` là khoá cố định (UUID do server sinh), `code` là tên máy cố định tuỳ chọn (`admin`…; `getApp` / `appPath` / `findAppByRoute` nhận cả code), `slug` là route đổi được (`updateApp(id, { slug })`). Remote app để trống URL = lấy `<code>.url` của config Shell. Server chưa trả lời thì chỉ có built-in (`admin`) + `registry.apps` của config. `importLocalApps()` đẩy app cũ trong localStorage `erp_registered_apps` (+ `registry.apps` của config) lên server một lần |
 
 Proxy `$`: mọi truy cập `superApp.$xyz` được resolve theo thứ tự protocol → business module (bị chặn nếu `isEnabled === false`) → field thật của class (`$router`, `$message`, `$vue`...).
 
@@ -47,7 +47,7 @@ Proxy `$`: mọi truy cập `superApp.$xyz` được resolve theo thứ tự pro
 
 1. User vào `/app/<slug>/*` (slug = route đổi được của app; id là khoá cố định — `findAppByRoute(slug)` → id, link theo id/slug cũ được chuyển sang slug hiện tại; link tạo bằng `appPath(id, sub)`) → route `AppGateway` render `AppContainer.vue`.
 2. `AppContainer` tách `baseModuleId` và `subPath`, gọi `superApp.resolveModule(baseModuleId)`.
-3. `resolveModule` tìm URL trong `config.moduleManifest` (từ discovery `admin.url` / `workspace.url`, env `VITE_*_URL`, hoặc registry app), `import(/* @vite-ignore */ url)`, gọi `module.default.install(app, superApp)`, đánh dấu `markModuleInstalled`.
+3. `resolveModule` tìm URL trong `config.moduleManifest` (từ discovery `admin.url` / `<code>.url`, env `VITE_*_URL`, hoặc registry app), `import(/* @vite-ignore */ url)`, gọi `module.default.install(app, superApp)`, đánh dấu `markModuleInstalled`.
 4. `AppContainer` lấy `superApp.getModuleEntry(baseModuleId)` và render bằng `<component :is>`.
 5. `superApp.runPathAction(baseModuleId, subPath)` để mini app đồng bộ tab / state nội bộ. Khi route đổi trong cùng module, chỉ bước 5 chạy lại, không remount.
 
@@ -74,7 +74,7 @@ interface ComponentRegistration { id; name?; description?; category?; component:
 interface SkillRegistration     { id; name; category; description?; icon?; handler }
 interface CommandRegistration   { id; name; category; shortcut?; handler }
 interface RegisteredApp         { id; name; url; entryUrl; isSystem?; isEnabled?; ... }
-interface IAppState             { current_app; current_workspace; workspaces }
+interface IAppState             { current_app }
 interface MfBridge              { Vue; Pinia; VueRouter; VueUse? }
 interface ITheme                { id; name; register(app, superApp, { uiStore }): ThemeServices }   // implement bởi sapp-theme-default
 interface IThemeConfig                     // superApp.$themeConfig: set / reset / useDefaults(look, { enforce }) / preview(look | null); PlatformConfig.look = giao diện chung (Admin → Theme)

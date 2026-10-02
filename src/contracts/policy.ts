@@ -14,7 +14,7 @@
  */
 import type { IAuthState } from './auth';
 
-/** What a strategy gets to decide with. Grows as strategies need more (e.g. the current workspace). */
+/** What a strategy gets to decide with. Grows as strategies need more (e.g. the current user). */
 export interface PolicyContext {
   auth: IAuthState;
 }

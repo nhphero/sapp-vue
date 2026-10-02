@@ -12,7 +12,7 @@ export interface IMfeModule {
     /** Primary module id (must match the id used in the app registry). */
     id: string;
     name: string;
-    /** Optional additional ids served by the same bundle (e.g. `expose` → workspace). */
+    /** Optional additional ids served by the same bundle (e.g. a legacy alias). */
     aliases?: string[];
     install(app: App, superApp: ISuperApp): void | Promise<void>;
 }

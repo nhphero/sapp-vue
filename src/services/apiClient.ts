@@ -1,11 +1,10 @@
 import axios, { type AxiosError, type AxiosInstance } from 'axios';
-import type { ApiClientError, CreateApi, CreateApiOptions, IAppState, MessageService } from '../contracts';
+import type { ApiClientError, CreateApi, CreateApiOptions, MessageService } from '../contracts';
 
 interface ApiFactoryDeps {
   /** localStorage key of the access token (`createSapp` option `auth.tokenKey`). */
   tokenKey: string;
   message?: MessageService | null;
-  appState?: () => IAppState | null;
 }
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -50,7 +49,7 @@ function toApiClientError(error: AxiosError): ApiClientError {
  */
 export function createApiFactory(deps: ApiFactoryDeps): CreateApi {
   return function createApi(options: CreateApiOptions): AxiosInstance {
-    const { baseURL, headers, withToken = true, workspace = false, onError, onSuccess, setup, ...axiosConfig } = options;
+    const { baseURL, headers, withToken = true, onError, onSuccess, setup, ...axiosConfig } = options;
 
     if (!baseURL) {
       throw new Error('[createApi] `baseURL` is required — read it from env (e.g. import.meta.env.VITE_API_URL) or pass a function.');
@@ -80,12 +79,6 @@ export function createApiFactory(deps: ApiFactoryDeps): CreateApi {
         const token = localStorage.getItem(deps.tokenKey);
         if (token && !config.headers.has('Authorization')) {
           config.headers.set('Authorization', `Bearer ${token}`);
-        }
-      }
-      if (workspace) {
-        const current = deps.appState?.()?.current_workspace;
-        if (current) {
-          config.headers.set('x-workspace-id', String(current));
         }
       }
       return config;

@@ -9,10 +9,6 @@ export interface SystemConfig {
   master_api_url?: string;
   /** Remote entry base URL of the admin MFE. */
   'admin.url'?: string;
-  /** Remote entry base URL of the workspace MFE. */
-  'workspace.url'?: string;
-  /** Workspaces pre-loaded for the app state. */
-  'system.workspaces'?: any[];
   [key: string]: any;
 }
 

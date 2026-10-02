@@ -55,8 +55,6 @@ export interface CreateApiOptions extends Omit<AxiosRequestConfig, 'baseURL' | '
   headers?: Record<string, string>;
   /** Send the signed-in user's bearer token. Default `true`. (Not `auth`: that is axios' basic-auth option.) */
   withToken?: boolean;
-  /** Send `x-workspace-id` of the current Shell workspace. Default `false`. */
-  workspace?: boolean;
   /**
    * Replaces the default error handling (a `$message.error` toast). Called once per failed request,
    * not for a cancelled one. The request promise still rejects with the same error.

@@ -7,7 +7,7 @@ import type { Component } from 'vue';
 /** Lazy or eager component reference accepted by the component registry. */
 export type ComponentSource = Component | (() => Promise<any>);
 export interface ComponentRegistration {
-    /** Global id, e.g. `workspace.main`, `integration.form.sql`. */
+    /** Global id, e.g. `admin.main`, `integration.form.sql`. */
     id: string;
     name?: string;
     description?: string;
